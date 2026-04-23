@@ -129,7 +129,7 @@ const handleSubmit = async () => {
   } catch (error) { console.error(error) }
 }
 const handleSubmitAudit = (row) => { ElMessageBox.confirm('确定要提交审核吗？', '提示').then(async () => { await submitScoreAudit(row.id); ElMessage.success('提交成功'); fetchData() }) }
-const handleAudit = (row, approved) => { ElMessageBox.confirm(`确定要${approved ? '通过' : '驳回'}该成绩吗？`, '提示').then(async () => { await auditScore({ id: row.id, status: approved ? 2 : 0, remark: '' }); ElMessage.success('审核完成'); fetchData() }) }
+const handleAudit = (row, approved) => { ElMessageBox.confirm(`确定要${approved ? '通过' : '驳回'}该成绩吗？`, '提示').then(async () => {await auditScore(row.id, approved ? 2 : 0, ''); ElMessage.success('审核完成'); fetchData() }) }
 const handleAppeal = (row) => { ElMessageBox.prompt('请输入申诉原因', '成绩申诉').then(async ({ value }) => { await submitScoreAppeal({ scoreId: row.id, reason: value }); ElMessage.success('申诉提交成功') }) }
 const handleImport = () => { ElMessage.info('批量导入功能开发中') }
 const handleExport = () => { ElMessage.info('导出功能开发中') }
