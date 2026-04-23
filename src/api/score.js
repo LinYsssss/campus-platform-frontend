@@ -10,6 +10,11 @@ export function addScore(data) {
   return request.post('/edu/score', data)
 }
 
+// 提交成绩审核
+export function submitScoreAudit(id) {
+  return request.put(`/edu/score/${id}/submit`)
+}
+
 // 批量导入成绩
 export function importScore(file, courseId, semester) {
   const formData = new FormData()
