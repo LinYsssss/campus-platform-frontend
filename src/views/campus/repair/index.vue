@@ -94,7 +94,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getRepairPage, submitRepair, updateRepairStatus } from '@/api/repair'
+import { getRepairPage, submitRepair, acceptRepair, finishRepair } from '@/api/repair'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -127,8 +127,17 @@ const handleFormSubmit = async () => {
     fetchData()
   } catch (error) { console.error(error) }
 }
-const handleProcess = (row) => { updateRepairStatus(row.id, 1); ElMessage.success('已开始处理'); fetchData() }
-const handleComplete = (row) => { updateRepairStatus(row.id, 2); ElMessage.success('已标记完成'); fetchData() }
+const handleProcess = async (row) => {
+  await acceptRepair(row.id, /* handlerId */)
+  ElMessage.success('已开始处理')
+  fetchData()
+}
+
+const handleComplete = async (row) => {
+  await finishRepair(row.id, '')
+  ElMessage.success('已标记完成')
+  fetchData()
+}
 const handleView = (row) => { console.log('查看详情', row) }
 const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
 const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
