@@ -1,6 +1,6 @@
 import request from './request'
 
-// 创建考勤场次
+// 创建考勤场次 测试
 export function createAttendanceSession(data) {
   return request.post('/edu/attendance/session/create', data)
 }
