@@ -35,11 +35,6 @@ export function updateRoom(data) {
   return request.put('/svc/dorm/room', data)
 }
 
-// 删除房间
-export function deleteRoom(id) {
-  return request.delete(`/svc/dorm/room/${id}`)
-}
-
 // 获取住宿分配列表
 export function getAllocationList(params) {
   return request.get('/svc/dorm/allocation/list', { params })
@@ -48,4 +43,9 @@ export function getAllocationList(params) {
 // 分配宿舍
 export function allocateDorm(data) {
   return request.post('/svc/dorm/allocation', data)
+}
+
+// 办理退宿
+export function deallocateDorm(id) {
+  return request.delete(`/svc/dorm/allocation/${id}`)
 }

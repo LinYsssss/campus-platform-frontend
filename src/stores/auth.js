@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login, logout, getUserInfo, getCaptcha } from '@/api/auth'
+import { login, logout, getUserInfo, getCaptcha, userRegister } from '@/api/auth'
 import router from '@/router'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -25,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
     const res = await getCaptcha()
     captchaKey.value = res.captchaKey
     captchaImage.value = res.captchaImage
+    console.log('[验证码] captchaKey:', res.captchaKey)
   }
 
   // 登录
@@ -46,6 +47,11 @@ export const useAuthStore = defineStore('auth', () => {
     permissions.value = data.permissions || []
     roles.value = data.roles || []
     return data
+  }
+
+  // 注册（适配 sys/user 新增用户接口）
+  async function registerAction(data) {
+    return await userRegister(data)
   }
 
   // 登出
@@ -81,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     userRole,
     fetchCaptcha,
     loginAction,
+    registerAction,
     fetchUserInfo,
     logoutAction,
     resetState

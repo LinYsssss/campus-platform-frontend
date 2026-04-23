@@ -17,7 +17,7 @@ request.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore()
     if (authStore.token) {
-      config.headers['Authorization'] = `Bearer ${authStore.token}`
+      config.headers['Authorization'] = authStore.token
     }
     return config
   },
@@ -38,12 +38,13 @@ request.interceptors.response.use(
     
     // 处理特定错误码
     switch (code) {
-      case 401:
+      case 401: {
         ElMessage.error('登录已过期，请重新登录')
         const authStore = useAuthStore()
-        authStore.logout()
+        authStore.logoutAction()
         router.push('/login')
         break
+      }
       case 403:
         ElMessage.error('没有操作权限')
         break
@@ -64,12 +65,13 @@ request.interceptors.response.use(
     
     if (response) {
       switch (response.status) {
-        case 401:
+        case 401: {
           ElMessage.error('登录已过期，请重新登录')
           const authStore = useAuthStore()
-          authStore.logout()
+          authStore.logoutAction()
           router.push('/login')
           break
+        }
         case 403:
           ElMessage.error('没有操作权限')
           break

@@ -22,12 +22,12 @@ export function deleteBook(id) {
 
 // 借阅图书
 export function borrowBook(bookId) {
-  return request.post('/svc/book/borrow', { bookId })
+  return request.post('/svc/book/borrow', null, { params: { bookId } })
 }
 
 // 归还图书
 export function returnBook(borrowId) {
-  return request.post('/svc/book/return', { borrowId })
+  return request.put(`/svc/book/return/${borrowId}`)
 }
 
 // 获取我的借阅

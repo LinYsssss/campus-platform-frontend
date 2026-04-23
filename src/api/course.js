@@ -25,12 +25,7 @@ export function deleteCourse(id) {
   return request.delete(`/edu/course/${id}`)
 }
 
-// 获取教师课程列表
-export function getTeacherCourses(params) {
-  return request.get('/edu/course/teacher/list', { params })
-}
-
-// 获取学生课程列表
-export function getStudentCourses(params) {
-  return request.get('/edu/course/student/list', { params })
+// 课程结课
+export function finishCourse(id) {
+  return request.put(`/edu/course/${id}/finish`)
 }

@@ -10,7 +10,7 @@ export function submitEvaluation(data) {
   return request.post('/edu/evaluation', data)
 }
 
-// 获取我的评价
-export function getMyEvaluations(params) {
-  return request.get('/edu/evaluation/my', { params })
+// 删除评价（管理员）
+export function deleteEvaluation(id) {
+  return request.delete(`/edu/evaluation/${id}`)
 }

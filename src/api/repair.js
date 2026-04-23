@@ -15,7 +15,17 @@ export function submitRepair(data) {
   return request.post('/svc/repair', data)
 }
 
-// 更新报修状态
-export function updateRepairStatus(id, status) {
-  return request.put(`/svc/repair/${id}/status`, { status })
+// 受理报修
+export function acceptRepair(id, handlerId) {
+  return request.put(`/svc/repair/${id}/accept`, null, { params: { handlerId } })
+}
+
+// 完成报修
+export function finishRepair(id, remark) {
+  return request.put(`/svc/repair/${id}/finish`, null, { params: { remark } })
+}
+
+// 验收报修（管理员）
+export function verifyRepair(id, score, remark) {
+  return request.put(`/svc/repair/${id}/verify`, null, { params: { score, remark } })
 }

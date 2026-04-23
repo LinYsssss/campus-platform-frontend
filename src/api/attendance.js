@@ -20,6 +20,11 @@ export function attendanceSign(sessionCode) {
   return request.post('/edu/attendance/sign', null, { params: { sessionCode } })
 }
 
+// 结束考勤场次
+export function finishAttendanceSession(sessionId) {
+  return request.put(`/edu/attendance/session/${sessionId}/finish`)
+}
+
 // 获取我的考勤记录
 export function getMyAttendanceRecords(params) {
   return request.get('/edu/attendance/my', { params })

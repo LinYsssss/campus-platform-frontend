@@ -48,6 +48,6 @@ export function exportUser(params) {
 }
 
 // 重置密码
-export function resetPassword(id) {
-  return request.put(`/sys/user/${id}/reset-password`)
+export function resetPassword(id, newPassword) {
+  return request.put(`/sys/user/${id}/resetPwd`, null, { params: { newPassword } })
 }

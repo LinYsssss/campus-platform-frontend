@@ -25,7 +25,7 @@ export function deleteNotice(id) {
   return request.delete(`/svc/notice/${id}`)
 }
 
-// 获取我的通知
-export function getMyNotices(params) {
-  return request.get('/svc/notice/my', { params })
+// 发布公告
+export function publishNotice(id) {
+  return request.put(`/svc/notice/${id}/publish`)
 }

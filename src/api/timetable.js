@@ -6,8 +6,8 @@ export function getMyTimetable(semester) {
 }
 
 // 获取班级课表
-export function getClassTimetable(classId, semester) {
-  return request.get('/edu/timetable/class', { params: { classId, semester } })
+export function getClassTimetable(className, semester) {
+  return request.get('/edu/timetable/class', { params: { className, semester } })
 }
 
 // 课表分页查询

@@ -16,6 +16,6 @@ export function getLeavePage(params) {
 }
 
 // 审核请假
-export function auditLeave(data) {
-  return request.put('/edu/leave/audit', data)
+export function auditLeave(id, status, remark) {
+  return request.put(`/edu/leave/${id}/approve`, null, { params: { status, remark } })
 }

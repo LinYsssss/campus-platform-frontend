@@ -11,6 +11,12 @@ const routes = [
     meta: { title: '登录', hidden: true }
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/register/index.vue'),
+    meta: { title: '注册', hidden: true }
+  },
+  {
     path: '/',
     name: 'Layout',
     component: () => import('@/layout/index.vue'),
@@ -172,7 +178,7 @@ const router = createRouter({
 })
 
 // 白名单
-const whiteList = ['/login', '/404']
+const whiteList = ['/login', '/register', '/404']
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
