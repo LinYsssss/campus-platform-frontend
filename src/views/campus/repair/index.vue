@@ -24,6 +24,7 @@
             <el-option label="待处理" value="0" />
             <el-option label="处理中" value="1" />
             <el-option label="已完成" value="2" />
+            <el-option label="已验收" value="3" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -36,23 +37,22 @@
         <el-table-column prop="orderNo" label="工单号" width="150" />
         <el-table-column prop="repairType" label="报修类型">
           <template #default="{ row }">
-            <el-tag>{{ row.repairType === 'water_elec' ? '水电维修' : row.repairType === 'furniture' ? '家具维修' : row.repairType === 'equipment' ? '设备维修' : '其他' }}</el-tag>
+            <el-tag>{{ repairTypeMap[row.repairType] || '其他' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="location" label="报修地点" />
         <el-table-column prop="description" label="问题描述" show-overflow-tooltip />
         <el-table-column prop="status" label="状态">
           <template #default="{ row }">
-            <el-tag :type="row.status === 0 ? 'warning' : row.status === 1 ? 'primary' : 'success'">
-              {{ row.status === 0 ? '待处理' : row.status === 1 ? '处理中' : '已完成' }}
-            </el-tag>
+            <el-tag :type="statusTagType[row.status]">{{ statusMap[row.status] }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="提交时间" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="280">
           <template #default="{ row }">
-            <el-button v-if="row.status === 0" link type="primary" @click="handleProcess(row)">处理</el-button>
-            <el-button v-if="row.status === 1" link type="success" @click="handleComplete(row)">完成</el-button>
+            <el-button v-if="row.status === 0" link type="primary" @click="handleAccept(row)">受理</el-button>
+            <el-button v-if="row.status === 1" link type="success" @click="handleFinish(row)">完成</el-button>
+            <el-button v-if="row.status === 2" link type="warning" @click="handleVerify(row)">验收</el-button>
             <el-button link type="primary" @click="handleView(row)">查看</el-button>
           </template>
         </el-table-column>
@@ -77,15 +77,25 @@
         <el-form-item label="问题描述" prop="description">
           <el-input v-model="formData.description" type="textarea" rows="4" placeholder="请详细描述问题" />
         </el-form-item>
-        <el-form-item label="上传图片">
-          <el-upload action="#" list-type="picture-card" :auto-upload="false">
-            <el-icon><Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleFormSubmit">提交</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="verifyDialogVisible" title="验收报修" width="500px">
+      <el-form :model="verifyForm" label-width="100px">
+        <el-form-item label="评分">
+          <el-rate v-model="verifyForm.score" :max="5" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="verifyForm.remark" type="textarea" rows="3" placeholder="请输入验收备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="verifyDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitVerify">确认验收</el-button>
       </template>
     </el-dialog>
   </div>
@@ -93,9 +103,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getRepairPage, submitRepair, updateRepairStatus } from '@/api/repair'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getRepairPage, submitRepair, acceptRepair, finishRepair, verifyRepair } from '@/api/repair'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const tableData = ref([])
 const searchForm = reactive({ repairType: '', status: '' })
@@ -105,6 +117,10 @@ const dialogVisible = ref(false)
 const formRef = ref(null)
 const formData = reactive({ repairType: '', location: '', description: '' })
 const formRules = { repairType: [{ required: true, message: '请选择报修类型', trigger: 'change' }], location: [{ required: true, message: '请输入报修地点', trigger: 'blur' }], description: [{ required: true, message: '请输入问题描述', trigger: 'blur' }] }
+
+const repairTypeMap = { water_elec: '水电维修', furniture: '家具维修', equipment: '设备维修', other: '其他' }
+const statusMap = { 0: '待处理', 1: '处理中', 2: '已完成', 3: '已验收' }
+const statusTagType = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
 
 const fetchData = async () => {
   loading.value = true
@@ -127,8 +143,42 @@ const handleFormSubmit = async () => {
     fetchData()
   } catch (error) { console.error(error) }
 }
-const handleProcess = (row) => { updateRepairStatus(row.id, 1); ElMessage.success('已开始处理'); fetchData() }
-const handleComplete = (row) => { updateRepairStatus(row.id, 2); ElMessage.success('已标记完成'); fetchData() }
+
+const handleAccept = async (row) => {
+  try {
+    await acceptRepair(row.id, authStore.user?.id)
+    ElMessage.success('受理成功')
+    fetchData()
+  } catch (error) { ElMessage.error('受理失败') }
+}
+
+const handleFinish = (row) => {
+  ElMessageBox.prompt('请输入完成备注', '完成报修').then(async ({ value }) => {
+    try {
+      await finishRepair(row.id, value)
+      ElMessage.success('已完成')
+      fetchData()
+    } catch (error) { ElMessage.error('操作失败') }
+  }).catch(() => {})
+}
+
+const verifyDialogVisible = ref(false)
+const verifyForm = reactive({ id: null, score: 5, remark: '' })
+const handleVerify = (row) => {
+  verifyForm.id = row.id
+  verifyForm.score = 5
+  verifyForm.remark = ''
+  verifyDialogVisible.value = true
+}
+const submitVerify = async () => {
+  try {
+    await verifyRepair(verifyForm.id, verifyForm.score, verifyForm.remark)
+    ElMessage.success('验收成功')
+    verifyDialogVisible.value = false
+    fetchData()
+  } catch (error) { ElMessage.error('验收失败') }
+}
+
 const handleView = (row) => { console.log('查看详情', row) }
 const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
 const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }

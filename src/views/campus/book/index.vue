@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <el-tabs v-model="activeTab" type="border-card">
+    <el-tabs v-model="activeTab" type="border-card" @tab-change="onTabChange">
       <el-tab-pane label="图书检索" name="search">
         <el-card shadow="never">
           <el-form :model="searchForm" inline>
@@ -93,8 +93,13 @@ const fetchBorrowList = async () => {
   loading.value = true
   try {
     const res = await getMyBorrows()
-    borrowList.value = res.list || []
+    borrowList.value = res.list || res.data || []
   } finally { loading.value = false }
+}
+
+const onTabChange = (tab) => {
+  if (tab === 'search') fetchBookList()
+  else if (tab === 'my') fetchBorrowList()
 }
 
 const handleSearch = () => { pagination.pageNum = 1; fetchBookList() }
