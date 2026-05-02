@@ -1,10 +1,14 @@
 name: Deploy Frontend
 
-# 触发条件：当 main 分支有代码推入时执行
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -25,12 +29,15 @@ jobs:
       - name: Build Project
         run: npm run build
 
+      - name: Verify build artifact
+        run: test -f dist/index.html
+
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@main
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_IP }}
-          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.FRONTEND_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.FRONTEND_HOST }}
+          REMOTE_USER: ${{ secrets.FRONTEND_USER }}
           SOURCE: "dist/"
-          TARGET: "/var/www/campus-front"
+          TARGET: "/opt/campus-frontend/dist"
           ARGS: "-avzr --delete"
