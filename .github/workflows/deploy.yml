@@ -11,33 +11,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  trigger-server-build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' '${{ secrets.FRONTEND_SSH_KEY }}' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.FRONTEND_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Pull & Build on server
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.FRONTEND_USER }}@${{ secrets.FRONTEND_HOST }} \
+            'bash -s' << 'REMOTE'
+            set -e
+            cd /opt/campus-frontend/repo
+            echo "==> git pull"
+            git pull --ff-only origin main
 
-      - name: Install Dependencies
-        run: npm ci
+            echo "==> npm ci"
+            npm ci --no-audit --no-fund
 
-      - name: Build Project
-        run: npm run build
+            echo "==> npm run build"
+            npm run build
 
-      - name: Verify build artifact
-        run: test -f dist/index.html
+            echo "==> verify dist"
+            test -f dist/index.html
+            ls -la dist | head
 
-      - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.FRONTEND_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.FRONTEND_HOST }}
-          REMOTE_USER: ${{ secrets.FRONTEND_USER }}
-          SOURCE: "dist/"
-          TARGET: "/opt/campus-frontend/dist"
-          ARGS: "-avzr --delete"
+            echo "Deploy success"
+          REMOTE
