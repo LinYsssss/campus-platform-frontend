@@ -4,8 +4,11 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 // 创建 axios 实例
+// baseURL 由环境变量控制:
+//   开发:.env.development -> /api(走 vite proxy)
+//   生产:.env.production  -> /api(走 nginx 同域反代)
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE || '/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
