@@ -8,6 +8,7 @@ export const useAppStore = defineStore('app', () => {
   const visitedViews = ref([])
   const cachedViews = ref([])
   const theme = ref(localStorage.getItem('theme') || 'light')
+  const permissionRoutes = ref([])
 
   // Getters
   const isMobile = computed(() => device.value === 'mobile')
@@ -72,12 +73,17 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function setPermissionRoutes(routes) {
+    permissionRoutes.value = routes
+  }
+
   return {
     sidebarCollapsed,
     device,
     visitedViews,
     cachedViews,
     theme,
+    permissionRoutes,
     isMobile,
     isDark,
     toggleSidebar,
@@ -87,6 +93,7 @@ export const useAppStore = defineStore('app', () => {
     removeVisitedView,
     addCachedView,
     toggleTheme,
-    setTheme
+    setTheme,
+    setPermissionRoutes
   }
 })

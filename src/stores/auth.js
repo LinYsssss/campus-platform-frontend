@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login, logout, getUserInfo, getCaptcha, userRegister } from '@/api/auth'
+import { useAppStore } from './app'
 import router from '@/router'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -71,6 +72,9 @@ export const useAuthStore = defineStore('auth', () => {
     permissions.value = []
     roles.value = []
     localStorage.removeItem('token')
+    // 清除过滤后的路由，下次登录重新生成
+    const appStore = useAppStore()
+    appStore.setPermissionRoutes([])
   }
 
   return {

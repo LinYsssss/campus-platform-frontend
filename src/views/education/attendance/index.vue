@@ -1,6 +1,7 @@
 <template>
   <div class="page-container">
-    <el-row :gutter="16">
+    <!-- 教师/管理员：发起考勤 + 考勤记录 -->
+    <el-row :gutter="16" v-if="userRole !== 'student'">
       <el-col :xs="24" :lg="8">
         <el-card shadow="never">
           <template #header>
@@ -65,18 +66,46 @@
       </el-col>
     </el-row>
 
-    <!-- 学生签到 -->
-    <el-card shadow="never" style="margin-top: 16px;" v-if="userRole === 'student'">
-      <template #header>
-        <div class="card-header">
-          <span>学生签到</span>
+    <!-- 学生：签到 + 我的考勤记录 -->
+    <template v-else>
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>学生签到</span>
+          </div>
+        </template>
+        <div class="student-sign">
+          <el-input v-model="signCode" placeholder="请输入签到码" style="width: 240px; margin-right: 12px;" size="large" />
+          <el-button type="primary" @click="handleSign" :loading="signing" size="large">立即签到</el-button>
         </div>
-      </template>
-      <div class="student-sign">
-        <el-input v-model="signCode" placeholder="请输入签到码" style="width: 200px; margin-right: 10px;" />
-        <el-button type="primary" @click="handleSign" :loading="signing">立即签到</el-button>
-      </div>
-    </el-card>
+      </el-card>
+
+      <el-card shadow="never" style="margin-top: 16px;">
+        <template #header>
+          <div class="card-header">
+            <span>我的考勤记录</span>
+            <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+          </div>
+        </template>
+        <el-table :data="attendanceList" v-loading="loading" stripe>
+          <el-table-column prop="courseName" label="课程名称" />
+          <el-table-column prop="sessionCode" label="签到码" />
+          <el-table-column prop="startTime" label="开始时间" />
+          <el-table-column prop="endTime" label="结束时间" />
+          <el-table-column prop="signedCount" label="实到人数" />
+          <el-table-column label="出勤率">
+            <template #default="{ row }">
+              <el-progress :percentage="Math.round((row.signedCount / row.totalCount) * 100)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleViewDetail(row)">详情</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
   </div>
 </template>
 
