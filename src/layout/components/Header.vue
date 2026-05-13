@@ -6,42 +6,42 @@
         <Fold v-if="!appStore.sidebarCollapsed" />
         <Expand v-else />
       </el-icon>
-      
+
       <!-- 面包屑 -->
       <Breadcrumb />
     </div>
-    
+
     <div class="header-right">
       <!-- 搜索 -->
       <el-icon class="action-icon"><Search /></el-icon>
-      
+
       <!-- 全屏 -->
       <el-icon class="action-icon" @click="toggleFullScreen">
         <FullScreen v-if="!isFullscreen" />
         <Aim v-else />
       </el-icon>
-      
+
       <!-- 主题切换 -->
       <el-icon class="action-icon" @click="appStore.toggleTheme()">
         <Moon v-if="appStore.theme === 'light'" />
         <Sunny v-else />
       </el-icon>
-      
+
       <!-- 消息通知 -->
       <el-badge :value="3" class="action-icon">
         <el-icon><Bell /></el-icon>
       </el-badge>
-      
+
       <!-- 用户信息 -->
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
-          <el-avatar :size="32" :src="authStore.avatar">
+          <el-avatar :size="30" :src="authStore.avatar" class="user-avatar">
             <el-icon><User /></el-icon>
           </el-avatar>
           <span class="username">{{ authStore.nickname || authStore.username }}</span>
-          <el-icon><ArrowDown /></el-icon>
+          <el-icon class="arrow-icon"><ArrowDown /></el-icon>
         </div>
-        
+
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="profile">
@@ -107,13 +107,19 @@ const handleCommand = (command) => {
 
 <style scoped>
 .header {
-  height: 60px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  padding: 0 20px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--apple-hairline, #e0e0e0);
+  box-shadow: none;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-left {
@@ -123,29 +129,33 @@ const handleCommand = (command) => {
 }
 
 .collapse-btn {
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
-  color: #606266;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+  transition: color 0.2s;
 }
 
 .collapse-btn:hover {
-  color: #409EFF;
+  color: var(--apple-primary, #0066cc);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
 }
 
 .action-icon {
-  font-size: 18px;
-  color: #606266;
+  font-size: 17px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
   cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .action-icon:hover {
-  color: #409EFF;
+  color: var(--apple-primary, #0066cc);
 }
 
 .user-info {
@@ -153,17 +163,29 @@ const handleCommand = (command) => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.3s;
+  padding: 4px 10px;
+  border-radius: var(--apple-radius-pill, 9999px);
+  transition: background 0.2s;
 }
 
 .user-info:hover {
-  background: #f5f7fa;
+  background: var(--apple-parchment, #f5f5f7);
+}
+
+.user-avatar {
+  background: var(--apple-parchment, #f5f5f7);
+  color: var(--apple-ink-muted-48, #7a7a7a);
 }
 
 .username {
   font-size: 14px;
-  color: #606266;
+  font-weight: 500;
+  color: var(--apple-ink, #1d1d1f);
+  letter-spacing: -0.224px;
+}
+
+.arrow-icon {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
 }
 </style>

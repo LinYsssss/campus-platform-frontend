@@ -9,7 +9,7 @@
       <img src="@/assets/logo.svg" class="logo-img" alt="logo">
       <span v-show="!appStore.sidebarCollapsed" class="logo-text">智慧校园</span>
     </div>
-    
+
     <!-- 菜单 -->
     <el-scrollbar class="menu-scrollbar">
       <el-menu
@@ -17,9 +17,9 @@
         :collapse="appStore.sidebarCollapsed"
         :collapse-transition="false"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
+        background-color="transparent"
+        text-color="rgba(255,255,255,0.8)"
+        active-text-color="#2997ff"
       >
         <SidebarItem
           v-for="route in menuRoutes"
@@ -43,7 +43,6 @@ const router = useRouter()
 const appStore = useAppStore()
 
 const menuRoutes = computed(() => {
-  // 从路由配置中获取 layout 的子路由
   const layoutRoute = router.getRoutes().find(r => r.name === 'Layout')
   return layoutRoute?.children?.filter(r => !r.meta?.hidden) || []
 })
@@ -63,32 +62,34 @@ const activeMenu = computed(() => {
 
 <style scoped>
 .sidebar {
-  background: #304156;
-  transition: width 0.3s;
+  background: var(--apple-ink, #1d1d1f);
+  transition: width 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
 .logo-container {
-  height: 60px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2b3649;
-  border-bottom: 1px solid #1f2d3d;
+  background: var(--apple-black, #000000);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .logo-img {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
 }
 
 .logo-text {
-  margin-left: 12px;
-  color: #fff;
-  font-size: 16px;
+  margin-left: 10px;
+  color: var(--apple-on-dark, #ffffff);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.3px;
   white-space: nowrap;
+  font-family: var(--apple-font-display, system-ui, -apple-system, sans-serif);
 }
 
 .menu-scrollbar {
@@ -97,5 +98,38 @@ const activeMenu = computed(() => {
 
 :deep(.el-menu) {
   border-right: none;
+  padding: 8px;
+  background: transparent !important;
+}
+
+:deep(.el-menu-item),
+:deep(.el-sub-menu__title) {
+  border-radius: 8px;
+  margin: 2px 0;
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+  letter-spacing: -0.224px;
+  transition: background 0.2s ease;
+}
+
+:deep(.el-menu-item:hover),
+:deep(.el-sub-menu__title:hover) {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+:deep(.el-menu-item.is-active) {
+  background: rgba(41, 151, 255, 0.12) !important;
+  color: var(--apple-primary-on-dark, #2997ff) !important;
+}
+
+:deep(.el-sub-menu .el-menu) {
+  padding: 0 0 0 8px;
+}
+
+:deep(.el-menu--collapse .el-menu-item),
+:deep(.el-menu--collapse .el-sub-menu__title) {
+  padding: 0 !important;
+  text-align: center;
 }
 </style>

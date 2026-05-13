@@ -15,7 +15,7 @@
         </el-icon>
       </div>
     </el-scrollbar>
-    
+
     <!-- 右键菜单 -->
     <ul v-show="visible" :style="{ left: left + 'px', top: top + 'px' }" class="contextmenu">
       <li @click="refreshSelectedTag(selectedTag)">刷新页面</li>
@@ -94,7 +94,6 @@ const closeAllTags = (view) => {
 }
 
 const refreshSelectedTag = () => {
-  // 刷新页面逻辑
   window.location.reload()
 }
 
@@ -104,9 +103,9 @@ const openMenu = (tag, e) => {
   const offsetWidth = e.target.getBoundingClientRect().width
   const maxLeft = offsetWidth - menuMinWidth
   const newLeft = e.clientX - offsetLeft
-  
+
   left.value = newLeft > maxLeft ? maxLeft : newLeft
-  top.value = e.clientY - 60
+  top.value = e.clientY - 52
   visible.value = true
   selectedTag.value = tag
 }
@@ -127,10 +126,12 @@ watch(visible, (val) => {
 
 <style scoped>
 .tags-view-container {
-  height: 40px;
-  background: #fff;
-  border-bottom: 1px solid #d8dce5;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  height: 36px;
+  background: var(--apple-parchment, #f5f5f7);
+  border-bottom: 1px solid var(--apple-divider-soft, #f0f0f0);
+  box-shadow: none;
+  display: flex;
+  align-items: center;
 }
 
 .tags-view-wrapper {
@@ -142,63 +143,70 @@ watch(visible, (val) => {
   align-items: center;
   position: relative;
   cursor: pointer;
-  height: 28px;
-  line-height: 28px;
-  border: 1px solid #d8dce5;
-  color: #495060;
-  background: #fff;
+  height: 24px;
+  line-height: 24px;
+  border: none;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+  background: transparent;
   padding: 0 12px;
-  font-size: 13px;
-  margin-left: 5px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.12px;
+  margin-left: 4px;
   margin-top: 5px;
-  border-radius: 3px;
+  border-radius: var(--apple-radius-pill, 9999px);
+  transition: all 0.2s ease;
 }
 
 .tags-view-item.active {
-  background-color: #409EFF;
-  color: #fff;
-  border-color: #409EFF;
+  background: var(--apple-primary, #0066cc);
+  color: var(--apple-on-primary, #ffffff);
 }
 
-.tags-view-item:hover {
-  background-color: #f0f9ff;
-}
-
-.tags-view-item.active:hover {
-  background-color: #409EFF;
+.tags-view-item:hover:not(.active) {
+  background: var(--apple-hairline, #e0e0e0);
+  color: var(--apple-ink, #1d1d1f);
 }
 
 .close-icon {
-  margin-left: 6px;
-  font-size: 12px;
+  margin-left: 4px;
+  font-size: 10px;
+  border-radius: 50%;
+  transition: background 0.15s;
 }
 
 .close-icon:hover {
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
+}
+
+.tags-view-item.active .close-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .contextmenu {
   margin: 0;
-  background: #fff;
+  background: var(--apple-canvas, #ffffff);
   z-index: 3000;
   position: absolute;
   list-style-type: none;
-  padding: 5px 0;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: var(--apple-radius-md, 11px);
   font-size: 13px;
   font-weight: 400;
-  color: #333;
-  box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3);
+  color: var(--apple-ink, #1d1d1f);
+  border: 1px solid var(--apple-hairline, #e0e0e0);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 .contextmenu li {
   margin: 0;
   padding: 7px 16px;
   cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
 }
 
 .contextmenu li:hover {
-  background: #eee;
+  background: var(--apple-parchment, #f5f5f7);
 }
 </style>

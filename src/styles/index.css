@@ -1,61 +1,219 @@
-/* 全局样式 */
+/* ============================================================
+   Apple Design System — Global Styles
+   Based on Apple's design language: single accent, pill CTAs,
+   no decorative shadows, negative letter-spacing headlines,
+   17px body, backdrop-filter navigation.
+   ============================================================ */
 
-/* 滚动条样式 */
+:root {
+  /* —— Colors —— */
+  --apple-primary: #0066cc;
+  --apple-primary-focus: #0071e3;
+  --apple-primary-on-dark: #2997ff;
+  --apple-ink: #1d1d1f;
+  --apple-body: #1d1d1f;
+  --apple-body-on-dark: #ffffff;
+  --apple-body-muted: #cccccc;
+  --apple-ink-muted-80: #333333;
+  --apple-ink-muted-48: #7a7a7a;
+  --apple-divider-soft: #f0f0f0;
+  --apple-hairline: #e0e0e0;
+  --apple-canvas: #ffffff;
+  --apple-parchment: #f5f5f7;
+  --apple-pearl: #fafafc;
+  --apple-tile-1: #272729;
+  --apple-tile-2: #2a2a2c;
+  --apple-tile-3: #252527;
+  --apple-black: #000000;
+  --apple-chip: #d2d2d7;
+  --apple-on-primary: #ffffff;
+  --apple-on-dark: #ffffff;
+
+  /* —— Typography —— */
+  --apple-font-display: "SF Pro Display", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --apple-font-body: "SF Pro Text", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* —— Spacing —— */
+  --apple-space-xs: 8px;
+  --apple-space-sm: 12px;
+  --apple-space-md: 17px;
+  --apple-space-lg: 24px;
+  --apple-space-xl: 32px;
+  --apple-space-xxl: 48px;
+
+  /* —— Rounded —— */
+  --apple-radius-sm: 8px;
+  --apple-radius-md: 11px;
+  --apple-radius-lg: 18px;
+  --apple-radius-pill: 9999px;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--apple-font-body);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
+  background: var(--apple-parchment);
+  margin: 0;
+}
+
+/* ============================================================
+   Scrollbar
+   ============================================================ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c0c4cc;
-  border-radius: 3px;
+  background: var(--apple-chip);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f7fa;
+  background: transparent;
 }
 
-/* Element Plus 样式覆盖 */
+/* ============================================================
+   Element Plus — Button
+   ============================================================ */
+.el-button {
+  border-radius: var(--apple-radius-pill) !important;
+  font-family: var(--apple-font-body);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.374px;
+  padding: 11px 22px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.el-button:active {
+  transform: scale(0.97);
+}
+
+.el-button--primary {
+  background: var(--apple-primary) !important;
+  border-color: var(--apple-primary) !important;
+  color: var(--apple-on-primary) !important;
+}
+
+.el-button--primary:focus-visible {
+  outline: 2px solid var(--apple-primary-focus);
+  outline-offset: 2px;
+}
+
+.el-button--default {
+  background: var(--apple-canvas) !important;
+  border: 1px solid var(--apple-primary) !important;
+  color: var(--apple-primary) !important;
+}
+
+.el-button--danger {
+  background: #ff3b30 !important;
+  border-color: #ff3b30 !important;
+}
+
+.el-button--small {
+  font-size: 14px;
+  padding: 7px 16px;
+}
+
+.el-button--large {
+  font-size: 18px;
+  font-weight: 300;
+  padding: 14px 28px;
+}
+
+.el-button.is-link {
+  padding: 4px 8px;
+  border: none !important;
+  background: transparent !important;
+  color: var(--apple-primary) !important;
+  border-radius: var(--apple-radius-sm) !important;
+}
+
+/* ============================================================
+   Element Plus — Card
+   ============================================================ */
 .el-card {
-  border-radius: 8px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border-radius: var(--apple-radius-lg) !important;
+  border: 1px solid var(--apple-hairline) !important;
+  box-shadow: none !important;
+  background: var(--apple-canvas);
 }
 
 .el-card__header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-  font-weight: 500;
-}
-
-.el-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background: #f5f7fa !important;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--apple-divider-soft);
   font-weight: 600;
-  color: #606266;
+  font-size: 17px;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
 }
 
-.el-button {
-  border-radius: 6px;
+.el-card__body {
+  padding: 24px;
 }
 
-.el-input__wrapper {
-  border-radius: 6px;
+/* ============================================================
+   Element Plus — Table
+   ============================================================ */
+.el-table {
+  border-radius: var(--apple-radius-lg);
+  overflow: hidden;
+  font-size: 14px;
+  --el-table-border-color: var(--apple-divider-soft);
 }
 
+.el-table th.el-table__cell {
+  background: var(--apple-parchment) !important;
+  font-weight: 600;
+  color: var(--apple-ink-muted-80);
+  font-size: 14px;
+  letter-spacing: -0.224px;
+}
+
+.el-table td.el-table__cell {
+  color: var(--apple-ink);
+}
+
+.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+  background: #f0f5ff;
+}
+
+/* ============================================================
+   Element Plus — Dialog
+   ============================================================ */
 .el-dialog {
-  border-radius: 12px;
+  border-radius: var(--apple-radius-lg) !important;
+  border: 1px solid var(--apple-hairline);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12) !important;
   overflow: hidden;
 }
 
 .el-dialog__header {
   margin: 0;
   padding: 20px 24px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--apple-divider-soft);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.374px;
 }
 
 .el-dialog__body {
@@ -64,47 +222,201 @@
 
 .el-dialog__footer {
   padding: 16px 24px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--apple-divider-soft);
 }
 
-/* 分页样式 */
+/* ============================================================
+   Element Plus — Input / Select
+   ============================================================ */
+.el-input__wrapper {
+  border-radius: var(--apple-radius-sm) !important;
+  box-shadow: 0 0 0 1px var(--apple-hairline) inset !important;
+  padding: 4px 12px;
+  transition: box-shadow 0.2s ease;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--apple-chip) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px var(--apple-primary) inset !important;
+}
+
+.el-input__inner {
+  font-family: var(--apple-font-body);
+  font-size: 17px;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
+}
+
+.el-textarea__inner {
+  border-radius: var(--apple-radius-sm);
+  font-family: var(--apple-font-body);
+  font-size: 17px;
+  letter-spacing: -0.374px;
+}
+
+.el-select .el-input__wrapper {
+  border-radius: var(--apple-radius-sm) !important;
+}
+
+/* ============================================================
+   Element Plus — Tag
+   ============================================================ */
+.el-tag {
+  border-radius: var(--apple-radius-pill) !important;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.12px;
+  padding: 2px 10px;
+  border: none;
+}
+
+.el-tag--info {
+  background: var(--apple-parchment);
+  color: var(--apple-ink-muted-80);
+}
+
+.el-tag--success {
+  background: #e8f8ee;
+  color: #1a7f37;
+}
+
+.el-tag--warning {
+  background: #fff8e1;
+  color: #b06000;
+}
+
+.el-tag--danger {
+  background: #ffe5e5;
+  color: #cf222e;
+}
+
+/* ============================================================
+   Element Plus — Pagination
+   ============================================================ */
 .el-pagination {
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 20px;
+  font-size: 14px;
+  letter-spacing: -0.224px;
 }
 
-/* 表单样式 */
+.el-pagination button {
+  border-radius: var(--apple-radius-sm) !important;
+}
+
+.el-pager li {
+  border-radius: var(--apple-radius-sm) !important;
+}
+
+.el-pager li.is-active {
+  background: var(--apple-primary) !important;
+  color: var(--apple-on-primary) !important;
+}
+
+/* ============================================================
+   Element Plus — Form
+   ============================================================ */
 .el-form-item__label {
   font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.224px;
+  color: var(--apple-ink-muted-80);
 }
 
-/* 标签样式 */
-.el-tag {
-  border-radius: 4px;
-}
-
-/* 菜单样式 */
+/* ============================================================
+   Element Plus — Menu (sidebar)
+   ============================================================ */
 .el-menu {
   border-right: none;
 }
 
-/* 暗色主题适配 */
-html.dark {
-  color-scheme: dark;
+/* ============================================================
+   Element Plus — Switch
+   ============================================================ */
+.el-switch.is-checked .el-switch__core {
+  background: var(--apple-primary);
+  border-color: var(--apple-primary);
 }
 
-html.dark body {
-  background: #1a1a1a;
-  color: #e0e0e0;
+/* ============================================================
+   Element Plus — Badge
+   ============================================================ */
+.el-badge__content.is-fixed {
+  border: none;
 }
 
-/* 页面切换动画 */
+/* ============================================================
+   Element Plus — Dropdown
+   ============================================================ */
+.el-dropdown-menu {
+  border-radius: var(--apple-radius-md) !important;
+  border: 1px solid var(--apple-hairline);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+  padding: 4px;
+}
+
+.el-dropdown-menu__item {
+  border-radius: var(--apple-radius-sm);
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   Element Plus — Message / Notification
+   ============================================================ */
+.el-message {
+  border-radius: var(--apple-radius-md) !important;
+  border: 1px solid var(--apple-hairline) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ============================================================
+   Element Plus — Upload
+   ============================================================ */
+.el-upload-dragger {
+  border-radius: var(--apple-radius-lg) !important;
+  border-color: var(--apple-hairline);
+}
+
+/* ============================================================
+   Page transitions
+   ============================================================ */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
+}
+
+.fade-transform-leave-active,
+.fade-transform-enter-active {
+  transition: all 0.25s ease;
+}
+
+.fade-transform-enter-from {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.fade-transform-leave-to {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+/* ============================================================
+   Dark mode overrides
+   ============================================================ */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background: var(--apple-black);
+  color: var(--apple-body-on-dark);
 }

@@ -2,14 +2,14 @@
   <el-container class="layout-container">
     <!-- 侧边栏 -->
     <Sidebar />
-    
+
     <el-container class="main-container">
       <!-- 顶部导航 -->
       <Header />
-      
+
       <!-- 标签页 -->
       <TagsView v-if="showTagsView" />
-      
+
       <!-- 主内容区 -->
       <el-main class="main-content">
         <router-view v-slot="{ Component }">
@@ -51,24 +51,8 @@ const showTagsView = true
 
 .main-content {
   flex: 1;
-  padding: 16px;
-  background: #f5f7fa;
+  padding: 24px;
+  background: var(--apple-parchment, #f5f7fa);
   overflow-y: auto;
-}
-
-/* 页面切换动画 */
-.fade-transform-leave-active,
-.fade-transform-enter-active {
-  transition: all 0.3s;
-}
-
-.fade-transform-enter-from {
-  opacity: 0;
-  transform: translateX(-20px);
-}
-
-.fade-transform-leave-to {
-  opacity: 0;
-  transform: translateX(20px);
 }
 </style>
