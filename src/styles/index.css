@@ -7,8 +7,8 @@
 
 :root {
   /* —— Colors —— */
-  --apple-primary: #0066cc;
-  --apple-primary-focus: #0071e3;
+  --apple-primary: #1d1d1f;
+  --apple-primary-focus: #333333;
   --apple-primary-on-dark: #2997ff;
   --apple-ink: #1d1d1f;
   --apple-body: #1d1d1f;
@@ -26,6 +26,7 @@
   --apple-tile-3: #252527;
   --apple-black: #000000;
   --apple-chip: #d2d2d7;
+  --apple-link: #0066cc;
   --apple-on-primary: #ffffff;
   --apple-on-dark: #ffffff;
 
@@ -108,20 +109,30 @@ body {
 }
 
 .el-button--primary {
-  background: var(--apple-primary) !important;
-  border-color: var(--apple-primary) !important;
+  background: var(--apple-ink) !important;
+  border-color: var(--apple-ink) !important;
   color: var(--apple-on-primary) !important;
 }
 
+.el-button--primary:hover {
+  background: #333333 !important;
+  border-color: #333333 !important;
+}
+
 .el-button--primary:focus-visible {
-  outline: 2px solid var(--apple-primary-focus);
+  outline: 2px solid var(--apple-ink-muted-80);
   outline-offset: 2px;
 }
 
 .el-button--default {
   background: var(--apple-canvas) !important;
-  border: 1px solid var(--apple-primary) !important;
-  color: var(--apple-primary) !important;
+  border: 1px solid var(--apple-hairline) !important;
+  color: var(--apple-ink) !important;
+}
+
+.el-button--default:hover {
+  border-color: var(--apple-chip) !important;
+  color: var(--apple-ink) !important;
 }
 
 .el-button--danger {
@@ -144,7 +155,7 @@ body {
   padding: 4px 8px;
   border: none !important;
   background: transparent !important;
-  color: var(--apple-primary) !important;
+  color: var(--apple-link) !important;
   border-radius: var(--apple-radius-sm) !important;
 }
 
@@ -194,7 +205,7 @@ body {
 }
 
 .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
-  background: #f0f5ff;
+  background: var(--apple-parchment);
 }
 
 /* ============================================================
@@ -240,7 +251,7 @@ body {
 }
 
 .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 2px var(--apple-primary) inset !important;
+  box-shadow: 0 0 0 2px var(--apple-ink) inset !important;
 }
 
 .el-input__inner {
@@ -312,7 +323,7 @@ body {
 }
 
 .el-pager li.is-active {
-  background: var(--apple-primary) !important;
+  background: var(--apple-ink) !important;
   color: var(--apple-on-primary) !important;
 }
 
@@ -337,8 +348,8 @@ body {
    Element Plus — Switch
    ============================================================ */
 .el-switch.is-checked .el-switch__core {
-  background: var(--apple-primary);
-  border-color: var(--apple-primary);
+  background: var(--apple-ink);
+  border-color: var(--apple-ink);
 }
 
 /* ============================================================

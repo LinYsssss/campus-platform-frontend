@@ -159,7 +159,7 @@ watch(visible, (val) => {
 }
 
 .tags-view-item.active {
-  background: var(--apple-primary, #0066cc);
+  background: var(--apple-ink, #1d1d1f);
   color: var(--apple-on-primary, #ffffff);
 }
 

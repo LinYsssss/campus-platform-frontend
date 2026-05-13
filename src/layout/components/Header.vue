@@ -136,7 +136,7 @@ const handleCommand = (command) => {
 }
 
 .collapse-btn:hover {
-  color: var(--apple-primary, #0066cc);
+  color: var(--apple-ink, #1d1d1f);
 }
 
 .header-right {
@@ -155,7 +155,7 @@ const handleCommand = (command) => {
 }
 
 .action-icon:hover {
-  color: var(--apple-primary, #0066cc);
+  color: var(--apple-ink, #1d1d1f);
 }
 
 .user-info {

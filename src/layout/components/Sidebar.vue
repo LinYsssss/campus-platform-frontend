@@ -19,7 +19,7 @@
         router
         background-color="transparent"
         text-color="rgba(255,255,255,0.8)"
-        active-text-color="#2997ff"
+        active-text-color="#ffffff"
       >
         <SidebarItem
           v-for="route in menuRoutes"
@@ -34,18 +34,15 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import SidebarItem from './SidebarItem.vue'
 
 const route = useRoute()
-const router = useRouter()
 const appStore = useAppStore()
 
-const menuRoutes = computed(() => {
-  const layoutRoute = router.getRoutes().find(r => r.name === 'Layout')
-  return layoutRoute?.children?.filter(r => !r.meta?.hidden) || []
-})
+// 使用路由守卫中按角色过滤后的路由列表
+const menuRoutes = computed(() => appStore.permissionRoutes)
 
 const sidebarWidth = computed(() => {
   return appStore.sidebarCollapsed ? '64px' : '210px'
@@ -119,8 +116,8 @@ const activeMenu = computed(() => {
 }
 
 :deep(.el-menu-item.is-active) {
-  background: rgba(41, 151, 255, 0.12) !important;
-  color: var(--apple-primary-on-dark, #2997ff) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
 }
 
 :deep(.el-sub-menu .el-menu) {

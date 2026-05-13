@@ -188,10 +188,10 @@ const latestNotices = ref([
 ])
 
 const quickLinks = ref([
-  { name: '我的课表', icon: 'Calendar', path: '/education/timetable', color: '#0066cc' },
-  { name: '成绩查询', icon: 'Trophy', path: '/education/score', color: '#0066cc' },
-  { name: '请假申请', icon: 'Timer', path: '/education/leave', color: '#0066cc' },
-  { name: '课程评价', icon: 'Star', path: '/education/evaluation', color: '#0066cc' }
+  { name: '我的课表', icon: 'Calendar', path: '/education/timetable', color: '#1d1d1f' },
+  { name: '成绩查询', icon: 'Trophy', path: '/education/score', color: '#1d1d1f' },
+  { name: '请假申请', icon: 'Timer', path: '/education/leave', color: '#1d1d1f' },
+  { name: '课程评价', icon: 'Star', path: '/education/evaluation', color: '#1d1d1f' }
 ])
 
 const initChart = () => {
@@ -225,11 +225,11 @@ const initChart = () => {
         type: 'line',
         smooth: true,
         data: [95, 96, 94, 97, 95, 90, 88],
-        itemStyle: { color: '#0066cc' },
+        itemStyle: { color: '#1d1d1f' },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(0, 102, 204, 0.15)' },
-            { offset: 1, color: 'rgba(0, 102, 204, 0.02)' }
+            { offset: 0, color: 'rgba(29, 29, 31, 0.12)' },
+            { offset: 1, color: 'rgba(29, 29, 31, 0.02)' }
           ])
         }
       },
@@ -352,8 +352,9 @@ onUnmounted(() => {
 }
 
 .hero-actions .el-button--primary {
-  background: var(--apple-primary, #0066cc) !important;
-  border-color: var(--apple-primary, #0066cc) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--apple-ink, #1d1d1f) !important;
 }
 
 /* ============================================================
@@ -424,7 +425,7 @@ onUnmounted(() => {
 }
 
 .tile-link {
-  color: var(--apple-primary, #0066cc);
+  color: var(--apple-link, #0066cc);
   font-size: 14px;
   cursor: pointer;
   text-decoration: none;
@@ -523,7 +524,7 @@ onUnmounted(() => {
 }
 
 .notice-dot.unread {
-  background: var(--apple-primary, #0066cc);
+  background: var(--apple-ink, #1d1d1f);
 }
 
 .notice-content {

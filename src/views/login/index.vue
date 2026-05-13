@@ -211,7 +211,7 @@ onMounted(() => {
 
 .login-form :deep(.el-input__wrapper.is-focus) {
   background: var(--apple-canvas, #ffffff);
-  box-shadow: 0 0 0 2px var(--apple-primary, #0066cc) inset !important;
+  box-shadow: 0 0 0 2px var(--apple-ink, #1d1d1f) inset !important;
 }
 
 .login-form :deep(.el-input__inner) {
@@ -274,12 +274,12 @@ onMounted(() => {
 }
 
 .form-options :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: var(--apple-primary, #0066cc);
-  border-color: var(--apple-primary, #0066cc);
+  background-color: var(--apple-ink, #1d1d1f);
+  border-color: var(--apple-ink, #1d1d1f);
 }
 
 .text-link {
-  color: var(--apple-primary, #0066cc);
+  color: var(--apple-link, #0066cc);
   text-decoration: none;
   font-size: 14px;
   letter-spacing: -0.224px;
@@ -287,7 +287,7 @@ onMounted(() => {
 }
 
 .text-link:hover {
-  color: var(--apple-primary-focus, #0071e3);
+  color: #0071e3;
   text-decoration: underline;
 }
 
@@ -298,12 +298,12 @@ onMounted(() => {
   font-weight: 400;
   letter-spacing: -0.374px;
   border-radius: 9999px !important;
-  background: var(--apple-primary, #0066cc) !important;
+  background: var(--apple-ink, #1d1d1f) !important;
   border: none !important;
 }
 
 .login-btn:hover {
-  background: var(--apple-primary-focus, #0071e3) !important;
+  background: #333333 !important;
 }
 
 .login-btn:active {
