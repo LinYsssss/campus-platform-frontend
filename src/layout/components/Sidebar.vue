@@ -6,8 +6,8 @@
   >
     <!-- Logo -->
     <div class="logo-container">
-      <img src="@/assets/logo.svg" class="logo-img" alt="logo">
-      <span v-show="!appStore.sidebarCollapsed" class="logo-text">智慧校园</span>
+      <img src="@/assets/logo-white.svg" class="logo-img" alt="logo">
+      <span v-show="!appStore.sidebarCollapsed" class="logo-text">Campus</span>
     </div>
 
     <!-- 菜单 -->

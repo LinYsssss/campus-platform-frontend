@@ -188,7 +188,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置页面标题
   if (to.meta.title) {
-    document.title = to.meta.title + ' - 智慧校园系统'
+    document.title = to.meta.title + ' - Campus Platform'
   }
 
   if (authStore.token) {

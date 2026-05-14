@@ -31,8 +31,8 @@
   --apple-on-dark: #ffffff;
 
   /* —— Typography —— */
-  --apple-font-display: "SF Pro Display", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --apple-font-body: "SF Pro Text", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --apple-font-display: "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --apple-font-body: "Inter", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
 
   /* —— Spacing —— */
   --apple-space-xs: 8px;
