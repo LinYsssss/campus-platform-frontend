@@ -18,7 +18,15 @@ export const useAuthStore = defineStore('auth', () => {
   const username = computed(() => userInfo.value?.username || '')
   const nickname = computed(() => userInfo.value?.nickname || '')
   const avatar = computed(() => userInfo.value?.avatar || '')
-  const userRole = computed(() => roles.value[0] || '')
+  const userType = computed(() => userInfo.value?.userType ?? -1)
+  const isAdmin = computed(() => userType.value === 2)
+  const isTeacher = computed(() => userType.value === 1)
+  const isStudent = computed(() => userType.value === 0)
+  const userRole = computed(() => {
+    if (isAdmin.value) return 'admin'
+    if (isTeacher.value) return 'teacher'
+    return 'student'
+  })
 
   // Actions
   // 获取验证码
@@ -88,6 +96,10 @@ export const useAuthStore = defineStore('auth', () => {
     username,
     nickname,
     avatar,
+    userType,
+    isAdmin,
+    isTeacher,
+    isStudent,
     userRole,
     fetchCaptcha,
     loginAction,

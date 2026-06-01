@@ -51,3 +51,8 @@ export function exportUser(params) {
 export function resetPassword(id, newPassword) {
   return request.put(`/sys/user/${id}/resetPwd`, null, { params: { newPassword } })
 }
+
+// 获取教师列表（用于课程关联选择）
+export function getTeacherList(params) {
+  return request.get('/sys/user/teachers', { params })
+}

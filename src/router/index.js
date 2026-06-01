@@ -86,7 +86,7 @@ const routes = [
             path: 'timetable',
             name: 'Timetable',
             component: () => import('@/views/education/timetable/index.vue'),
-            meta: { title: '课表管理', icon: 'Calendar', roles: ['admin', 'teacher', 'student'] }
+            meta: { title: '课表管理', icon: 'Calendar', roles: ['teacher', 'student'] }
           },
           {
             path: 'attendance',
@@ -110,7 +110,7 @@ const routes = [
             path: 'evaluation',
             name: 'Evaluation',
             component: () => import('@/views/education/evaluation/index.vue'),
-            meta: { title: '课程评价', icon: 'Star', roles: ['admin', 'teacher', 'student'] }
+            meta: { title: '课程评价', icon: 'Star', roles: ['student'] }
           }
         ]
       },
@@ -150,8 +150,21 @@ const routes = [
             name: 'Book',
             component: () => import('@/views/campus/book/index.vue'),
             meta: { title: '图书借阅', icon: 'Collection', roles: ['admin', 'teacher', 'student'] }
+          },
+          {
+            path: 'message',
+            name: 'Message',
+            component: () => import('@/views/message/index.vue'),
+            meta: { title: '消息通知', icon: 'ChatDotRound', roles: ['admin', 'teacher', 'student'] }
           }
         ]
+      },
+      // 课程详情
+      {
+        path: 'course-detail/:id',
+        name: 'CourseDetail',
+        component: () => import('@/views/admin/course-detail/index.vue'),
+        meta: { title: '课程详情', hidden: true }
       },
       // 数据统计 — 仅管理员
       {
@@ -205,14 +218,14 @@ router.beforeEach(async (to, from, next) => {
             await authStore.fetchUserInfo()
           }
 
-          const userRoles = authStore.roles
+          const userRole = authStore.userRole
           const layoutRoute = routes.find(r => r.name === 'Layout')
-          const filtered = filterRoutes(layoutRoute.children, userRoles)
+          const filtered = filterRoutes(layoutRoute.children, userRole)
           appStore.setPermissionRoutes(filtered)
 
           // 权限校验：目标路由不在可访问列表中则重定向
           if (to.name && !isRouteAccessible(to, filtered)) {
-            const defaultPath = ROLE_DEFAULT_PATH[userRoles[0]] || '/dashboard'
+            const defaultPath = ROLE_DEFAULT_PATH[userRole] || '/dashboard'
             next(defaultPath)
             return
           }
@@ -224,7 +237,7 @@ router.beforeEach(async (to, from, next) => {
       } else {
         // 路由已过滤，仅做权限校验
         if (to.name && !isRouteAccessible(to, appStore.permissionRoutes)) {
-          const defaultPath = ROLE_DEFAULT_PATH[authStore.roles[0]] || '/dashboard'
+          const defaultPath = ROLE_DEFAULT_PATH[authStore.userRole] || '/dashboard'
           next(defaultPath)
           return
         }

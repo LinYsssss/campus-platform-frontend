@@ -1,71 +1,95 @@
 <template>
   <div class="page-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>请假管理</span>
-          <el-button type="primary" @click="handleApply">
-            <el-icon><Plus /></el-icon>申请请假
-          </el-button>
-        </div>
-      </template>
+    <!-- 学生端 -->
+    <template v-if="userRole === 'student'">
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>我的请假</span>
+            <el-button type="primary" @click="handleApply"><el-icon><Plus /></el-icon>申请请假</el-button>
+          </div>
+        </template>
+        <el-table :data="myLeaveList" v-loading="loading" stripe>
+          <el-table-column prop="courseName" label="课程" />
+          <el-table-column label="请假类型" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.leaveType === 0">事假</el-tag>
+              <el-tag v-else-if="row.leaveType === 1" type="warning">病假</el-tag>
+              <el-tag v-else type="info">其他</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="reason" label="原因" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="startTime" label="开始时间" width="170" />
+          <el-table-column prop="endTime" label="结束时间" width="170" />
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 0" type="warning">待审批</el-tag>
+              <el-tag v-else-if="row.status === 1" type="success">已通过</el-tag>
+              <el-tag v-else type="danger">已驳回</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="approveRemark" label="审批意见" width="150" show-overflow-tooltip />
+        </el-table>
+        <el-empty v-if="myLeaveList.length === 0" description="暂无请假记录" />
+      </el-card>
+    </template>
 
-      <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="请假类型">
-          <el-select v-model="searchForm.leaveType" placeholder="请选择" clearable>
-            <el-option label="病假" value="sick" />
-            <el-option label="事假" value="personal" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择" clearable>
-            <el-option label="待审核" value="0" />
-            <el-option label="已通过" value="1" />
-            <el-option label="已驳回" value="2" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
-          <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
-        </el-form-item>
-      </el-form>
+    <!-- 教师/管理员端 -->
+    <template v-else>
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>请假审批</span>
+            <el-button @click="fetchLeavePage"><el-icon><Refresh /></el-icon>刷新</el-button>
+          </div>
+        </template>
+        <el-table :data="leavePageData" v-loading="loading" stripe>
+          <el-table-column prop="studentNo" label="学号" width="120" />
+          <el-table-column prop="studentName" label="姓名" width="100" />
+          <el-table-column prop="courseName" label="课程" />
+          <el-table-column label="请假类型" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.leaveType === 0">事假</el-tag>
+              <el-tag v-else-if="row.leaveType === 1" type="warning">病假</el-tag>
+              <el-tag v-else type="info">其他</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="reason" label="原因" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="startTime" label="开始时间" width="170" />
+          <el-table-column prop="endTime" label="结束时间" width="170" />
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 0" type="warning">待审批</el-tag>
+              <el-tag v-else-if="row.status === 1" type="success">已通过</el-tag>
+              <el-tag v-else type="danger">已驳回</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="160" fixed="right">
+            <template #default="{ row }">
+              <template v-if="row.status === 0">
+                <el-button link type="success" @click="handleApprove(row, 1)">通过</el-button>
+                <el-button link type="danger" @click="handleApprove(row, 2)">驳回</el-button>
+              </template>
+              <span v-else style="color: #909399; font-size: 12px;">已处理</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="leaveType" label="请假类型">
-          <template #default="{ row }">
-            <el-tag>{{ row.leaveType === 'sick' ? '病假' : row.leaveType === 'personal' ? '事假' : '其他' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="startTime" label="开始时间" />
-        <el-table-column prop="endTime" label="结束时间" />
-        <el-table-column prop="reason" label="请假原因" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 0 ? 'warning' : row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 0 ? '待审核' : row.status === 1 ? '已通过' : '已驳回' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150">
-          <template #default="{ row }">
-            <el-button v-if="row.status === 0" link type="success" @click="handleAudit(row, true)">通过</el-button>
-            <el-button v-if="row.status === 0" link type="danger" @click="handleAudit(row, false)">驳回</el-button>
-            <el-button link type="primary" @click="handleView(row)">查看</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-    </el-card>
-
+    <!-- 请假申请对话框 -->
     <el-dialog v-model="dialogVisible" title="申请请假" width="500px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+        <el-form-item label="选择课程" prop="courseId">
+          <el-select v-model="formData.courseId" placeholder="请选择课程" style="width: 100%;">
+            <el-option v-for="c in myCourses" :key="c.courseId" :label="c.courseName" :value="c.courseId" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="请假类型" prop="leaveType">
-          <el-select v-model="formData.leaveType" placeholder="请选择请假类型" style="width: 100%;">
-            <el-option label="病假" value="sick" />
-            <el-option label="事假" value="personal" />
-            <el-option label="其他" value="other" />
+          <el-select v-model="formData.leaveType" placeholder="请选择" style="width: 100%;">
+            <el-option label="事假" :value="0" />
+            <el-option label="病假" :value="1" />
+            <el-option label="其他" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="开始时间" prop="startTime">
@@ -87,50 +111,103 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getLeavePage, submitLeave, auditLeave } from '@/api/leave'
+import { submitLeave, getMyLeaves, getLeavePage, auditLeave } from '@/api/leave'
+import { getMyCourses } from '@/api/elective'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const userRole = computed(() => {
+  const t = authStore.userInfo?.userType
+  if (t === 2) return 'admin'
+  if (t === 1) return 'teacher'
+  return 'student'
+})
 
 const loading = ref(false)
-const tableData = ref([])
-const searchForm = reactive({ leaveType: '', status: '' })
-const pagination = reactive({ pageNum: 1, pageSize: 10, total: 0 })
+const myLeaveList = ref([])
+const leavePageData = ref([])
+const myCourses = ref([])
 
+const selectedSemester = ref('2025-2026-1')
+
+// 请假对话框
 const dialogVisible = ref(false)
 const formRef = ref(null)
-const formData = reactive({ leaveType: '', startTime: '', endTime: '', reason: '' })
-const formRules = { leaveType: [{ required: true, message: '请选择请假类型', trigger: 'change' }], startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }], endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }], reason: [{ required: true, message: '请输入请假原因', trigger: 'blur' }] }
+const formData = reactive({ courseId: null, leaveType: null, startTime: null, endTime: null, reason: '' })
+const formRules = {
+  courseId: [{ required: true, message: '请选择课程', trigger: 'change' }],
+  leaveType: [{ required: true, message: '请选择请假类型', trigger: 'change' }],
+  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
+  reason: [{ required: true, message: '请输入请假原因', trigger: 'blur' }]
+}
 
-const fetchData = async () => {
+// 学生：加载我的请假
+const fetchMyLeaves = async () => {
   loading.value = true
   try {
-    const res = await getLeavePage({ ...searchForm, pageNum: pagination.pageNum, pageSize: pagination.pageSize })
-    tableData.value = res.list || []
-    pagination.total = res.total || 0
+    const res = await getMyLeaves({ semester: selectedSemester.value })
+    myLeaveList.value = res || []
   } finally { loading.value = false }
 }
 
-const handleSearch = () => { pagination.pageNum = 1; fetchData() }
-const handleReset = () => { Object.keys(searchForm).forEach(k => searchForm[k] = ''); handleSearch() }
-const handleApply = () => { Object.assign(formData, { leaveType: '', startTime: '', endTime: '', reason: '' }); dialogVisible.value = true }
+// 学生：加载已选课程
+const fetchMyCourseList = async () => {
+  try {
+    const res = await getMyCourses({ semester: selectedSemester.value })
+    myCourses.value = res || []
+  } catch (e) { console.error(e) }
+}
+
+// 教师：加载待审批请假
+const fetchLeavePage = async () => {
+  loading.value = true
+  try {
+    const res = await getLeavePage({ pageNum: 1, pageSize: 50 })
+    leavePageData.value = res.list || []
+  } finally { loading.value = false }
+}
+
+const handleApply = async () => {
+  Object.assign(formData, { courseId: null, leaveType: null, startTime: null, endTime: null, reason: '' })
+  await fetchMyCourseList()
+  dialogVisible.value = true
+}
+
 const handleSubmit = async () => {
   await formRef.value.validate()
   try {
     await submitLeave(formData)
-    ElMessage.success('申请提交成功')
+    ElMessage.success('请假申请已提交')
     dialogVisible.value = false
-    fetchData()
-  } catch (error) { console.error(error) }
+    fetchMyLeaves()
+  } catch (e) { console.error(e) }
 }
-const handleAudit = (row, approved) => { ElMessageBox.confirm(`确定要${approved ? '通过' : '驳回'}该请假申请吗？`, '提示').then(async () => { await auditLeave({ id: row.id, status: approved ? 1 : 2, remark: '' }); ElMessage.success('审核完成'); fetchData() }) }
-const handleView = (row) => { console.log('查看详情', row) }
-const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
-const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
 
-onMounted(() => { fetchData() })
+const handleApprove = async (row, status) => {
+  const action = status === 1 ? '通过' : '驳回'
+  const { value: remark } = await ElMessageBox.prompt(`确定${action}该请假申请？`, '审批', {
+    confirmButtonText: action, cancelButtonText: '取消', inputPlaceholder: '审批意见（可选）'
+  }).catch(() => ({ value: null }))
+  if (remark === null) return
+  try {
+    await auditLeave(row.id, status, remark)
+    ElMessage.success(`已${action}`)
+    fetchLeavePage()
+  } catch (e) { console.error(e) }
+}
+
+onMounted(() => {
+  if (userRole.value === 'student') {
+    fetchMyLeaves()
+  } else {
+    fetchLeavePage()
+  }
+})
 </script>
 
 <style scoped>
 .card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; }
 </style>

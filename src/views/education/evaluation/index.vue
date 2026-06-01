@@ -4,37 +4,48 @@
       <template #header>
         <div class="card-header">
           <span>课程评价</span>
+          <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="fetchData">
+            <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
+            <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
+          </el-select>
         </div>
       </template>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table :data="courseList" v-loading="loading" stripe>
         <el-table-column prop="courseName" label="课程名称" min-width="150" />
-        <el-table-column prop="teacherName" label="任课教师" width="120" />
-        <el-table-column prop="rating" label="评分" width="120">
+        <el-table-column prop="courseCode" label="课程代码" width="120" />
+        <el-table-column label="任课教师" width="120">
+          <template #default="{ row }">{{ row.teacherNames?.join('、') || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="我的评分" width="150">
           <template #default="{ row }">
-            <el-rate v-model="row.rating" disabled show-score />
+            <el-rate v-if="row.myRating" :model-value="row.myRating" disabled show-score />
+            <span v-else style="color: #909399;">未评价</span>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="评价内容" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="评价时间" width="180" />
-        <el-table-column label="操作" width="120">
+        <el-table-column label="评价内容" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.myContent || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="!row.hasEvaluated" link type="primary" @click="handleEvaluate(row)">评价</el-button>
-            <el-button v-else link type="primary" @click="handleView(row)">查看</el-button>
+            <el-button link type="primary" @click="handleEvaluate(row)">
+              {{ row.myRating ? '修改评价' : '评价' }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+      <el-empty v-if="courseList.length === 0" description="暂无已选课程" />
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="课程评价" width="500px">
+    <!-- 评价对话框 -->
+    <el-dialog v-model="dialogVisible" :title="isModify ? '修改评价' : '课程评价'" width="500px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px">
         <el-form-item label="课程">
-          <el-input v-model="formData.courseName" disabled />
+          <el-input :model-value="formData.courseName" disabled />
         </el-form-item>
-        <el-form-item label="评分" prop="rating">
-          <el-rate v-model="formData.rating" :max="5" />
+        <el-form-item label="评分" prop="starRating">
+          <el-rate v-model="formData.starRating" :max="5" />
         </el-form-item>
         <el-form-item label="评价内容" prop="content">
           <el-input v-model="formData.content" type="textarea" rows="4" placeholder="请输入您的评价（最多200字）" maxlength="200" show-word-limit />
@@ -42,7 +53,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">提交评价</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ isModify ? '保存修改' : '提交评价' }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -51,39 +62,70 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getEvaluationPage, submitEvaluation } from '@/api/evaluation'
+import { submitEvaluation, updateEvaluation, getMyEvaluations } from '@/api/evaluation'
+import { getMyCourses } from '@/api/elective'
 
 const loading = ref(false)
-const tableData = ref([])
-const pagination = reactive({ pageNum: 1, pageSize: 10, total: 0 })
+const selectedSemester = ref('2025-2026-1')
+const courseList = ref([])
+const myEvaluations = ref([])
 
 const dialogVisible = ref(false)
+const isModify = ref(false)
 const formRef = ref(null)
-const formData = reactive({ courseId: null, courseName: '', rating: 5, content: '' })
-const formRules = { rating: [{ required: true, message: '请选择评分', trigger: 'change' }], content: [{ required: true, message: '请输入评价内容', trigger: 'blur' }] }
+const formData = reactive({ courseId: null, courseName: '', starRating: 5, content: '' })
+const formRules = {
+  starRating: [{ required: true, message: '请选择评分', trigger: 'change' }]
+}
 
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await getEvaluationPage({ pageNum: pagination.pageNum, pageSize: pagination.pageSize })
-    tableData.value = res.list || []
-    pagination.total = res.total || 0
-  } finally { loading.value = false }
+    // 获取已选课程
+    const courses = (await getMyCourses({ semester: selectedSemester.value })) || []
+    // 获取我的评价
+    const evals = (await getMyEvaluations()) || []
+    myEvaluations.value = evals
+
+    // 合并：课程 + 评价状态
+    courseList.value = courses.map(c => {
+      const ev = evals.find(e => e.courseId === c.courseId)
+      return {
+        ...c,
+        myRating: ev ? ev.starRating : null,
+        myContent: ev ? ev.content : null,
+        evaluationId: ev ? ev.id : null
+      }
+    })
+  } catch (e) { console.error(e) }
+  finally { loading.value = false }
 }
 
-const handleEvaluate = (row) => { Object.assign(formData, { courseId: row.courseId, courseName: row.courseName, rating: 5, content: '' }); dialogVisible.value = true }
+const handleEvaluate = (row) => {
+  isModify.value = !!row.myRating
+  Object.assign(formData, {
+    courseId: row.courseId,
+    courseName: row.courseName,
+    starRating: row.myRating || 5,
+    content: row.myContent || ''
+  })
+  dialogVisible.value = true
+}
+
 const handleSubmit = async () => {
   await formRef.value.validate()
   try {
-    await submitEvaluation(formData)
-    ElMessage.success('评价提交成功')
+    if (isModify.value) {
+      await updateEvaluation({ courseId: formData.courseId, starRating: formData.starRating, content: formData.content })
+      ElMessage.success('评价修改成功')
+    } else {
+      await submitEvaluation({ courseId: formData.courseId, starRating: formData.starRating, content: formData.content })
+      ElMessage.success('评价提交成功')
+    }
     dialogVisible.value = false
     fetchData()
-  } catch (error) { console.error(error) }
+  } catch (e) { console.error(e) }
 }
-const handleView = (row) => { console.log('查看评价', row) }
-const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
-const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
 
 onMounted(() => { fetchData() })
 </script>

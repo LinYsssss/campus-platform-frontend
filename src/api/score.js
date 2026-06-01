@@ -5,23 +5,14 @@ export function getScorePage(params) {
   return request.get('/edu/score/page', { params })
 }
 
-// 新增成绩
-export function addScore(data) {
+// 获取课程的学生成绩列表（教师填写成绩用）
+export function getCourseStudents(courseId, semester) {
+  return request.get(`/edu/score/course/${courseId}/students`, { params: { semester } })
+}
+
+// 录入/更新成绩（平时+考试，自动计算总成绩）
+export function saveScore(data) {
   return request.post('/edu/score', data)
-}
-
-// 批量导入成绩
-export function importScore(file, courseId, semester) {
-  const formData = new FormData()
-  formData.append('file', file)
-  return request.post(`/edu/score/import?courseId=${courseId}&semester=${semester}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-}
-
-// 更新成绩
-export function updateScore(data) {
-  return request.put('/edu/score', data)
 }
 
 // 管理员审核成绩

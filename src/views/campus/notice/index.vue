@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>公告通知</span>
-          <el-button type="primary" @click="handleAdd">
+          <el-button v-if="isAdmin" type="primary" @click="handleAdd">
             <el-icon><Plus /></el-icon>发布公告
           </el-button>
         </div>
@@ -12,14 +12,7 @@
 
       <el-form :model="searchForm" inline class="search-form">
         <el-form-item label="标题">
-          <el-input v-model="searchForm.title" placeholder="请输入标题" clearable />
-        </el-form-item>
-        <el-form-item label="类型">
-          <el-select v-model="searchForm.noticeType" placeholder="请选择" clearable>
-            <el-option label="通知" value="notice" />
-            <el-option label="公告" value="announcement" />
-            <el-option label="新闻" value="news" />
-          </el-select>
+          <el-input v-model="searchForm.keyword" placeholder="请输入标题" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
@@ -29,14 +22,7 @@
 
       <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="noticeType" label="类型" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.noticeType === 'notice' ? 'primary' : row.noticeType === 'announcement' ? 'warning' : 'info'">
-              {{ row.noticeType === 'notice' ? '通知' : row.noticeType === 'announcement' ? '公告' : '新闻' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="publisher" label="发布人" width="120" />
+        <el-table-column prop="publisherName" label="发布人" width="120" />
         <el-table-column prop="publishTime" label="发布时间" width="180" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
@@ -46,8 +32,8 @@
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row)">查看</el-button>
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="isAdmin" link type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button v-if="isAdmin" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -59,13 +45,6 @@
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px">
         <el-form-item label="标题" prop="title">
           <el-input v-model="formData.title" placeholder="请输入公告标题" />
-        </el-form-item>
-        <el-form-item label="类型" prop="noticeType">
-          <el-select v-model="formData.noticeType" placeholder="请选择类型" style="width: 100%;">
-            <el-option label="通知" value="notice" />
-            <el-option label="公告" value="announcement" />
-            <el-option label="新闻" value="news" />
-          </el-select>
         </el-form-item>
         <el-form-item label="内容" prop="content">
           <el-input v-model="formData.content" type="textarea" rows="6" placeholder="请输入公告内容" />
@@ -82,25 +61,38 @@
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 查看公告弹窗 -->
+    <el-dialog v-model="viewDialogVisible" title="公告详情" width="600px">
+      <h3 style="margin: 0 0 12px;">{{ viewData.title }}</h3>
+      <p style="font-size: 12px; color: #909399; margin: 0 0 16px;">
+        发布人：{{ viewData.publisherName || '-' }} | 发布时间：{{ viewData.publishTime || '-' }}
+      </p>
+      <div style="font-size: 15px; line-height: 1.7; white-space: pre-wrap;">{{ viewData.content }}</div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getNoticePage, addNotice, updateNotice, deleteNotice } from '@/api/notice'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.userInfo?.userType === 2)
 
 const loading = ref(false)
 const tableData = ref([])
-const searchForm = reactive({ title: '', noticeType: '' })
+const searchForm = reactive({ keyword: '' })
 const pagination = reactive({ pageNum: 1, pageSize: 10, total: 0 })
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const isEdit = ref(false)
 const formRef = ref(null)
-const formData = reactive({ id: null, title: '', noticeType: '', content: '', status: 1 })
-const formRules = { title: [{ required: true, message: '请输入标题', trigger: 'blur' }], noticeType: [{ required: true, message: '请选择类型', trigger: 'change' }], content: [{ required: true, message: '请输入内容', trigger: 'blur' }] }
+const formData = reactive({ id: null, title: '', content: '', status: 1 })
+const formRules = { title: [{ required: true, message: '请输入标题', trigger: 'blur' }], content: [{ required: true, message: '请输入内容', trigger: 'blur' }] }
 
 const fetchData = async () => {
   loading.value = true
@@ -113,7 +105,7 @@ const fetchData = async () => {
 
 const handleSearch = () => { pagination.pageNum = 1; fetchData() }
 const handleReset = () => { Object.keys(searchForm).forEach(k => searchForm[k] = ''); handleSearch() }
-const handleAdd = () => { isEdit.value = false; dialogTitle.value = '发布公告'; Object.assign(formData, { id: null, title: '', noticeType: '', content: '', status: 1 }); dialogVisible.value = true }
+const handleAdd = () => { isEdit.value = false; dialogTitle.value = '发布公告'; Object.assign(formData, { id: null, title: '', content: '', status: 1 }); dialogVisible.value = true }
 const handleEdit = (row) => { isEdit.value = true; dialogTitle.value = '编辑公告'; Object.assign(formData, row); dialogVisible.value = true }
 const handleSubmit = async () => {
   await formRef.value.validate()
@@ -123,7 +115,9 @@ const handleSubmit = async () => {
   } catch (error) { console.error(error) }
 }
 const handleDelete = (row) => { ElMessageBox.confirm(`确定要删除公告 "${row.title}" 吗？`, '提示', { type: 'warning' }).then(async () => { await deleteNotice(row.id); ElMessage.success('删除成功'); fetchData() }) }
-const handleView = (row) => { console.log('查看公告', row) }
+const viewDialogVisible = ref(false)
+const viewData = ref({})
+const handleView = (row) => { viewData.value = row; viewDialogVisible.value = true }
 const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
 const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
 

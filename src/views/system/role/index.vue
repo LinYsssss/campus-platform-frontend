@@ -1,25 +1,20 @@
 <template>
   <div class="page-container">
     <el-row :gutter="16">
-      <!-- 角色列表 -->
       <el-col :xs="24" :lg="10">
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
               <span>角色列表</span>
-              <el-button type="primary" @click="handleAdd">
-                <el-icon><Plus /></el-icon>新增
-              </el-button>
+              <el-button type="primary" @click="handleAdd"><el-icon><Plus /></el-icon>新增</el-button>
             </div>
           </template>
           <el-table :data="roleList" v-loading="loading" highlight-current-row @current-change="handleRoleSelect">
             <el-table-column prop="roleName" label="角色名称" />
-            <el-table-column prop="roleCode" label="角色编码" />
+            <el-table-column prop="roleKey" label="角色标识" />
             <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'">
-                  {{ row.status === 1 ? '启用' : '禁用' }}
-                </el-tag>
+                <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '正常' : '停用' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="150">
@@ -32,12 +27,11 @@
         </el-card>
       </el-col>
 
-      <!-- 权限配置 -->
       <el-col :xs="24" :lg="14">
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>菜单权限</span>
+              <span>菜单权限 {{ selectedRole ? `(${selectedRole.roleName})` : '' }}</span>
               <el-button type="primary" :disabled="!selectedRole" @click="handleSavePermission">
                 <el-icon><Check /></el-icon>保存权限
               </el-button>
@@ -52,27 +46,30 @@
             :default-checked-keys="checkedMenus"
             :disabled="!selectedRole"
           />
+          <el-empty v-if="!selectedRole" description="请先选择一个角色" />
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="角色名称" prop="roleName">
-          <el-input v-model="formData.roleName" placeholder="请输入角色名称" />
+          <el-input v-model="formData.roleName" placeholder="如：教师" />
         </el-form-item>
-        <el-form-item label="角色编码" prop="roleCode">
-          <el-input v-model="formData.roleCode" placeholder="请输入角色编码" />
+        <el-form-item label="角色标识" prop="roleKey">
+          <el-input v-model="formData.roleKey" placeholder="如：teacher" :disabled="isEdit" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="formData.remark" type="textarea" rows="3" placeholder="请输入描述" />
+        <el-form-item label="排序">
+          <el-input-number v-model="formData.sortOrder" :min="0" />
         </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="formData.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :value="0">正常</el-radio>
+            <el-radio :value="1">停用</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="formData.remark" type="textarea" rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -84,9 +81,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getRoleList, addRole, updateRole, deleteRole, assignRoleMenus } from '@/api/role'
+import { getRoleList, getRoleById, addRole, updateRole, deleteRole, assignRoleMenus } from '@/api/role'
 import { getMenuTree } from '@/api/menu'
 
 const loading = ref(false)
@@ -101,84 +98,57 @@ const dialogTitle = ref('')
 const isEdit = ref(false)
 const formRef = ref(null)
 
-const formData = reactive({
-  id: null,
-  roleName: '',
-  roleCode: '',
-  remark: '',
-  status: 1
-})
-
+const formData = reactive({ id: null, roleName: '', roleKey: '', sortOrder: 0, status: 0, remark: '' })
 const formRules = {
   roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-  roleCode: [{ required: true, message: '请输入角色编码', trigger: 'blur' }]
+  roleKey: [{ required: true, message: '请输入角色标识', trigger: 'blur' }]
 }
 
 const fetchData = async () => {
   loading.value = true
-  try {
-    const res = await getRoleList()
-    roleList.value = res || []
-  } finally {
-    loading.value = false
-  }
+  try { roleList.value = (await getRoleList()) || [] } finally { loading.value = false }
 }
 
 const fetchMenuTree = async () => {
-  try {
-    const res = await getMenuTree()
-    menuTree.value = res || []
-  } catch (error) {
-    console.error(error)
-  }
+  try { menuTree.value = (await getMenuTree()) || [] } catch (e) { console.error(e) }
 }
 
-const handleRoleSelect = (row) => {
+const handleRoleSelect = async (row) => {
   selectedRole.value = row
-  if (row && row.menuIds) {
-    checkedMenus.value = row.menuIds
-  } else {
+  if (!row) { checkedMenus.value = []; return }
+  try {
+    const detail = await getRoleById(row.id)
+    checkedMenus.value = detail.menuIds || []
+    nextTick(() => { menuTreeRef.value?.setCheckedKeys(checkedMenus.value) })
+  } catch (e) {
     checkedMenus.value = []
+    console.error(e)
   }
 }
 
 const handleAdd = () => {
-  isEdit.value = false
-  dialogTitle.value = '新增角色'
-  Object.assign(formData, { id: null, roleName: '', roleCode: '', remark: '', status: 1 })
+  isEdit.value = false; dialogTitle.value = '新增角色'
+  Object.assign(formData, { id: null, roleName: '', roleKey: '', sortOrder: 0, status: 0, remark: '' })
   dialogVisible.value = true
 }
 
 const handleEdit = (row) => {
-  isEdit.value = true
-  dialogTitle.value = '编辑角色'
-  Object.assign(formData, row)
+  isEdit.value = true; dialogTitle.value = '编辑角色'
+  Object.assign(formData, { id: row.id, roleName: row.roleName, roleKey: row.roleKey, sortOrder: row.sortOrder, status: row.status, remark: row.remark })
   dialogVisible.value = true
 }
 
 const handleSubmit = async () => {
   await formRef.value.validate()
   try {
-    if (isEdit.value) {
-      await updateRole(formData)
-    } else {
-      await addRole(formData)
-    }
-    ElMessage.success('保存成功')
-    dialogVisible.value = false
-    fetchData()
-  } catch (error) {
-    console.error(error)
-  }
+    if (isEdit.value) await updateRole(formData); else await addRole(formData)
+    ElMessage.success('保存成功'); dialogVisible.value = false; fetchData()
+  } catch (e) { console.error(e) }
 }
 
 const handleDelete = (row) => {
   ElMessageBox.confirm(`确定要删除角色 "${row.roleName}" 吗？`, '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteRole(row.id)
-      ElMessage.success('删除成功')
-      fetchData()
-    })
+    .then(async () => { await deleteRole(row.id); ElMessage.success('删除成功'); fetchData() })
 }
 
 const handleSavePermission = async () => {
@@ -189,21 +159,12 @@ const handleSavePermission = async () => {
   try {
     await assignRoleMenus(selectedRole.value.id, menuIds)
     ElMessage.success('权限保存成功')
-  } catch (error) {
-    console.error(error)
-  }
+  } catch (e) { console.error(e) }
 }
 
-onMounted(() => {
-  fetchData()
-  fetchMenuTree()
-})
+onMounted(() => { fetchData(); fetchMenuTree() })
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>

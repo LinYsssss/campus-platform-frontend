@@ -1,222 +1,286 @@
 <template>
   <div class="page-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>成绩管理</span>
-          <div>
-            <el-button type="primary" @click="handleImport">
-              <el-icon><Upload /></el-icon>批量导入
-            </el-button>
-            <el-button @click="handleExport">
-              <el-icon><Download /></el-icon>导出
-            </el-button>
+    <!-- 教师：成绩录入 -->
+    <template v-if="userRole === 'teacher'">
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>成绩管理</span>
+            <div style="display: flex; gap: 12px;">
+              <el-select v-model="selectedCourseId" placeholder="选择课程" style="width: 200px;" @change="handleCourseChange">
+                <el-option v-for="c in courseList" :key="c.id" :label="c.courseName" :value="c.id" />
+              </el-select>
+              <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="fetchStudents">
+                <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
+                <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
+                <el-option label="2024-2025学年第一学期" value="2024-2025-1" />
+                <el-option label="2024-2025学年第二学期" value="2024-2025-2" />
+              </el-select>
+            </div>
           </div>
+        </template>
+
+        <div v-if="selectedCourseId && currentCourse" style="margin-bottom: 16px;">
+          <el-tag type="info">成绩构成：平时成绩 {{ currentCourse.regularRatio || 30 }}% + 考试成绩 {{ currentCourse.examRatio || 70 }}%</el-tag>
+          <el-tag v-if="currentCourse.semester" style="margin-left: 8px;">学期：{{ currentCourse.semester }}</el-tag>
         </div>
-      </template>
 
-      <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="学期">
-          <el-select v-model="searchForm.semester" placeholder="选择学期" clearable>
-            <el-option label="2024-2025学年第一学期" value="2024-1" />
-            <el-option label="2024-2025学年第二学期" value="2024-2" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="课程">
-          <el-input v-model="searchForm.courseName" placeholder="请输入课程名称" clearable />
-        </el-form-item>
-        <el-form-item label="学生">
-          <el-input v-model="searchForm.studentName" placeholder="请输入学生姓名" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
-          <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
-        </el-form-item>
-      </el-form>
+        <el-empty v-if="!selectedCourseId" description="请先选择课程" />
+        <el-empty v-else-if="studentScores.length === 0" description="暂无学生选课" />
 
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="studentNo" label="学号" width="120" />
-        <el-table-column prop="studentName" label="姓名" width="100" />
-        <el-table-column prop="courseName" label="课程名称" min-width="150" />
-        <el-table-column prop="usualScore" label="平时成绩" width="100" />
-        <el-table-column prop="examScore" label="考试成绩" width="100" />
-        <el-table-column prop="totalScore" label="总评成绩" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getScoreType(row.totalScore)">{{ row.totalScore }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 2 ? 'success' : row.status === 1 ? 'warning' : 'info'">
-              {{ row.status === 2 ? '已归档' : row.status === 1 ? '审核中' : '录入中' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 1" link type="success" @click="handleAudit(row, true)">通过</el-button>
-            <el-button v-if="row.status === 1" link type="danger" @click="handleAudit(row, false)">驳回</el-button>
-            <el-button link type="primary" @click="handleAppeal(row)">申诉</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        <el-table v-else :data="studentScores" v-loading="loading" stripe>
+          <el-table-column prop="studentNo" label="学号" width="120" />
+          <el-table-column prop="studentName" label="姓名" width="100" />
+          <el-table-column prop="className" label="班级" width="80" />
+          <el-table-column label="平时成绩" width="130">
+            <template #default="{ row }">
+              <el-input-number v-model="row.regularScore" :min="0" :max="100" :precision="1" size="small" style="width: 110px;" @change="handleScoreChange(row)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="考试成绩" width="130">
+            <template #default="{ row }">
+              <el-input-number v-model="row.examScore" :min="0" :max="100" :precision="1" size="small" style="width: 110px;" @change="handleScoreChange(row)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="总成绩" width="100">
+            <template #default="{ row }">
+              <span :style="{ fontWeight: 600, color: getGradeColor(row.totalScore) }">
+                {{ row.totalScore != null ? row.totalScore : '-' }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="等级" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.gradeLevel === '优秀'" type="success">{{ row.gradeLevel }}</el-tag>
+              <el-tag v-else-if="row.gradeLevel === '及格'" type="warning">{{ row.gradeLevel }}</el-tag>
+              <el-tag v-else-if="row.gradeLevel === '不及格'" type="danger">{{ row.gradeLevel }}</el-tag>
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 0" type="info">待审</el-tag>
+              <el-tag v-else-if="row.status === 1" type="danger">驳回</el-tag>
+              <el-tag v-else-if="row.status === 2" type="success">归档</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleSave(row)" :disabled="row.status === 2">
+                {{ row.scoreId ? '更新' : '保存' }}
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
 
-      <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-    </el-card>
+    <!-- 管理员：成绩审核 -->
+    <template v-if="userRole === 'admin'">
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>成绩审核</span>
+            <el-button @click="fetchScores"><el-icon><Refresh /></el-icon>刷新</el-button>
+          </div>
+        </template>
+        <el-table :data="allScores" stripe>
+          <el-table-column prop="courseName" label="课程名称" min-width="120" />
+          <el-table-column prop="courseCode" label="课程代码" width="100" />
+          <el-table-column prop="totalScore" label="总成绩" width="80" />
+          <el-table-column prop="gradeLevel" label="等级" width="80" />
+          <el-table-column prop="status" label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 0" type="info">待审</el-tag>
+              <el-tag v-else-if="row.status === 1" type="danger">驳回</el-tag>
+              <el-tag v-else-if="row.status === 2" type="success">归档</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180">
+            <template #default="{ row }">
+              <el-button link type="success" @click="handleAudit(row, 2)" :disabled="row.status === 2">归档</el-button>
+              <el-button link type="danger" @click="handleAudit(row, 1)" :disabled="row.status === 2">驳回</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
 
-    <!-- 成绩录入/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
-        <el-form-item label="学生姓名">
-          <el-input v-model="formData.studentName" disabled />
-        </el-form-item>
-        <el-form-item label="课程名称">
-          <el-input v-model="formData.courseName" disabled />
-        </el-form-item>
-        <el-form-item label="平时成绩" prop="usualScore">
-          <el-input-number v-model="formData.usualScore" :min="0" :max="100" />
-        </el-form-item>
-        <el-form-item label="考试成绩" prop="examScore">
-          <el-input-number v-model="formData.examScore" :min="0" :max="100" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 批量导入对话框 -->
-    <el-dialog v-model="importDialogVisible" title="批量导入成绩" width="500px">
-      <el-form label-width="100px">
-        <el-form-item label="课程ID">
-          <el-input v-model="importForm.courseId" placeholder="请输入课程ID" />
-        </el-form-item>
-        <el-form-item label="学期">
-          <el-input v-model="importForm.semester" placeholder="例如 2024-1" />
-        </el-form-item>
-        <el-form-item label="文件">
-          <el-upload ref="uploadRef" action="#" :auto-upload="false" :limit="1" :on-change="handleFileChange">
-            <el-button type="primary">选择文件</el-button>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitImport">确认导入</el-button>
-      </template>
-    </el-dialog>
+    <!-- 学生 -->
+    <template v-if="userRole === 'student'">
+      <el-card shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>我的成绩</span>
+            <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="fetchMyScores">
+              <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
+              <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
+            </el-select>
+          </div>
+        </template>
+        <el-table :data="myScores" v-loading="loading" stripe>
+          <el-table-column prop="courseName" label="课程名称" />
+          <el-table-column prop="regularScore" label="平时成绩" width="100">
+            <template #default="{ row }">{{ row.regularScore ?? '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="examScore" label="考试成绩" width="100">
+            <template #default="{ row }">{{ row.examScore ?? '-' }}</template>
+          </el-table-column>
+          <el-table-column label="总成绩" width="100">
+            <template #default="{ row }">
+              <span :style="{ fontWeight: 600, color: getGradeColor(row.totalScore) }">{{ row.totalScore ?? '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="gradeLevel" label="等级" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.gradeLevel === '优秀'" type="success">{{ row.gradeLevel }}</el-tag>
+              <el-tag v-else-if="row.gradeLevel === '及格'" type="warning">{{ row.gradeLevel }}</el-tag>
+              <el-tag v-else-if="row.gradeLevel === '不及格'" type="danger">{{ row.gradeLevel }}</el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 0" type="info">待审</el-tag>
+              <el-tag v-else-if="row.status === 1" type="danger">驳回</el-tag>
+              <el-tag v-else-if="row.status === 2" type="success">已归档</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="myScores.length === 0" description="暂无成绩记录" />
+      </el-card>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getScorePage, addScore, updateScore, importScore, auditScore, submitScoreAppeal } from '@/api/score'
+import { getCourseStudents, saveScore, auditScore, getScorePage } from '@/api/score'
+import { getCoursePage, getCourseById } from '@/api/course'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const userRole = computed(() => {
+  const t = authStore.userInfo?.userType
+  if (t === 2) return 'admin'
+  if (t === 1) return 'teacher'
+  return 'student'
+})
 
 const loading = ref(false)
-const tableData = ref([])
-const searchForm = reactive({ semester: '', courseName: '', studentName: '' })
-const pagination = reactive({ pageNum: 1, pageSize: 10, total: 0 })
+const courseList = ref([])
+const selectedCourseId = ref(null)
+const selectedSemester = ref('2025-2026-1')
+const currentCourse = ref(null)
+const studentScores = ref([])
+const allScores = ref([])
+const myScores = ref([])
 
-const dialogVisible = ref(false)
-const dialogTitle = ref('成绩录入')
-const formRef = ref(null)
-const formData = reactive({ id: null, studentName: '', courseName: '', usualScore: 0, examScore: 0 })
-const formRules = { usualScore: [{ required: true, message: '请输入平时成绩', trigger: 'blur' }], examScore: [{ required: true, message: '请输入考试成绩', trigger: 'blur' }] }
+const fetchCourses = async () => {
+  try {
+    const res = await getCoursePage({ pageNum: 1, pageSize: 100, status: 0 })
+    courseList.value = res.list || []
+  } catch (e) { console.error(e) }
+}
 
-const importDialogVisible = ref(false)
-const importForm = reactive({ courseId: '', semester: '' })
-const importFile = ref(null)
-const uploadRef = ref(null)
+const handleCourseChange = async (courseId) => {
+  if (!courseId) { currentCourse.value = null; studentScores.value = []; return }
+  try {
+    const detail = await getCourseById(courseId)
+    currentCourse.value = detail.course
+  } catch (e) { console.error(e) }
+  fetchStudents()
+}
 
-const getScoreType = (score) => { if (score >= 90) return 'success'; if (score >= 60) return ''; return 'danger' }
-
-const fetchData = async () => {
+const fetchStudents = async () => {
+  if (!selectedCourseId.value) return
   loading.value = true
   try {
-    const res = await getScorePage({ ...searchForm, pageNum: pagination.pageNum, pageSize: pagination.pageSize })
-    tableData.value = res.list || []
-    pagination.total = res.total || 0
+    const res = await getCourseStudents(selectedCourseId.value, selectedSemester.value)
+    studentScores.value = res || []
   } finally { loading.value = false }
 }
 
-const handleSearch = () => { pagination.pageNum = 1; fetchData() }
-const handleReset = () => { Object.keys(searchForm).forEach(k => searchForm[k] = ''); handleSearch() }
-
-const handleEdit = (row) => {
-  dialogTitle.value = row.id ? '编辑成绩' : '成绩录入'
-  Object.assign(formData, { id: row.id, studentName: row.studentName, courseName: row.courseName, usualScore: row.usualScore ?? 0, examScore: row.examScore ?? 0 })
-  dialogVisible.value = true
+const handleScoreChange = (row) => {
+  // 自动计算总成绩和等级
+  if (row.regularScore != null && row.examScore != null && currentCourse.value) {
+    const ratio = currentCourse.value.regularRatio || 30
+    const examRatio = currentCourse.value.examRatio || 70
+    const total = (row.regularScore * ratio / 100 + row.examScore * examRatio / 100)
+    row.totalScore = Math.round(total * 100) / 100
+    if (row.totalScore < 60) row.gradeLevel = '不及格'
+    else if (row.totalScore <= 89) row.gradeLevel = '及格'
+    else row.gradeLevel = '优秀'
+  }
 }
 
-const handleSubmit = async () => {
-  await formRef.value.validate()
-  try {
-    if (formData.id) {
-      await updateScore(formData)
-    } else {
-      await addScore(formData)
-    }
-    ElMessage.success('保存成功')
-    dialogVisible.value = false
-    fetchData()
-  } catch (error) { console.error(error) }
-}
-
-const handleAudit = (row, approved) => {
-  ElMessageBox.confirm(`确定要${approved ? '通过' : '驳回'}该成绩吗？`, '提示').then(async () => {
-    try {
-      await auditScore(row.id, approved ? 2 : 0, '')
-      ElMessage.success('审核完成')
-      fetchData()
-    } catch (error) { ElMessage.error('审核失败') }
-  }).catch(() => {})
-}
-
-const handleAppeal = (row) => {
-  ElMessageBox.prompt('请输入申诉原因', '成绩申诉').then(async ({ value }) => {
-    try {
-      await submitScoreAppeal({ scoreId: row.id, reason: value })
-      ElMessage.success('申诉提交成功')
-    } catch (error) { ElMessage.error('申诉失败') }
-  }).catch(() => {})
-}
-
-const handleImport = () => {
-  importForm.courseId = ''
-  importForm.semester = ''
-  importFile.value = null
-  if (uploadRef.value) uploadRef.value.clearFiles()
-  importDialogVisible.value = true
-}
-
-const handleFileChange = (file) => {
-  importFile.value = file.raw
-}
-
-const submitImport = async () => {
-  if (!importFile.value || !importForm.courseId || !importForm.semester) {
-    ElMessage.warning('请填写完整信息并选择文件')
+const handleSave = async (row) => {
+  if (row.regularScore == null || row.examScore == null) {
+    ElMessage.warning('请填写平时成绩和考试成绩')
     return
   }
   try {
-    await importScore(importFile.value, importForm.courseId, importForm.semester)
-    ElMessage.success('导入成功')
-    importDialogVisible.value = false
-    fetchData()
-  } catch (error) { ElMessage.error('导入失败') }
+    await saveScore({
+      courseId: selectedCourseId.value,
+      studentId: row.studentId,
+      semester: selectedSemester.value,
+      regularScore: row.regularScore,
+      examScore: row.examScore
+    })
+    ElMessage.success('保存成功')
+    fetchStudents()
+  } catch (e) { console.error(e) }
 }
 
-const handleExport = () => { ElMessage.info('导出功能开发中') }
-const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
-const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
+const getGradeColor = (score) => {
+  if (score == null) return '#909399'
+  if (score < 60) return '#f56c6c'
+  if (score <= 89) return '#e6a23c'
+  return '#67c23a'
+}
 
-onMounted(() => { fetchData() })
+// 管理员审核
+const fetchScores = async () => {
+  try {
+    const res = await getScorePage({ pageNum: 1, pageSize: 50 })
+    allScores.value = res.list || []
+  } catch (e) { console.error(e) }
+}
+
+const handleAudit = async (row, status) => {
+  const action = status === 2 ? '归档' : '驳回'
+  const { value: remark } = await ElMessageBox.prompt(`${action}该成绩？`, '审核', {
+    confirmButtonText: action, cancelButtonText: '取消', inputPlaceholder: '审核意见（可选）'
+  }).catch(() => ({ value: null }))
+  if (remark === null) return
+  try {
+    await auditScore(row.id, status, remark)
+    ElMessage.success(`已${action}`)
+    fetchScores()
+    fetchStudents()
+  } catch (e) { console.error(e) }
+}
+
+// 学生查看成绩
+const fetchMyScores = async () => {
+  loading.value = true
+  try {
+    const res = await getScorePage({ semester: selectedSemester.value })
+    myScores.value = res.list || []
+  } finally { loading.value = false }
+}
+
+onMounted(() => {
+  if (userRole.value === 'student') {
+    fetchMyScores()
+  } else {
+    fetchCourses()
+    if (userRole.value === 'admin') fetchScores()
+  }
+})
 </script>
 
 <style scoped>
 .card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; }
 </style>
