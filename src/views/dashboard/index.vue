@@ -141,6 +141,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
+import { animate, stagger } from 'animejs'
 import { useAuthStore } from '@/stores/auth'
 import { getDashboardOverview } from '@/api/dashboard'
 import { User, UserFilled, Reading, Checked, Bell, Tools, Calendar, Trophy, Timer, Star } from '@element-plus/icons-vue'
@@ -265,6 +266,28 @@ const fetchData = async () => {
       attendanceRate: 96.5
     }
   }
+  animateStats()
+}
+
+const animateStats = () => {
+  // 数字滚动动画
+  const animTarget = { student: 0, teacher: 0, course: 0, rate: 0 }
+  animate(animTarget, {
+    student: stats.value.studentCount || 0,
+    teacher: stats.value.teacherCount || 0,
+    course: stats.value.courseCount || 0,
+    rate: stats.value.attendanceRate || 0,
+    duration: 1800,
+    easing: 'easeOutExpo',
+    onUpdate: () => {
+      stats.value = {
+        studentCount: Math.round(animTarget.student),
+        teacherCount: Math.round(animTarget.teacher),
+        courseCount: Math.round(animTarget.course),
+        attendanceRate: Math.round(animTarget.rate * 10) / 10
+      }
+    }
+  })
 }
 
 const handleResize = () => {
@@ -275,6 +298,23 @@ onMounted(() => {
   fetchData()
   initChart()
   window.addEventListener('resize', handleResize)
+
+  // 卡片交错入场动画
+  animate('.stat-card', {
+    translateY: [24, 0],
+    opacity: [0, 1],
+    delay: stagger(120),
+    duration: 600,
+    easing: 'easeOutCubic'
+  })
+
+  animate('.tile-card', {
+    translateY: [32, 0],
+    opacity: [0, 1],
+    delay: stagger(200, { start: 400 }),
+    duration: 700,
+    easing: 'easeOutCubic'
+  })
 })
 
 onUnmounted(() => {

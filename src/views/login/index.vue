@@ -144,6 +144,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { animate } from 'animejs'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -313,9 +314,65 @@ function initCanvas() {
 
 let cleanupCanvas = null
 
+const initFloatingShapes = () => {
+  // 登录卡片入场
+  animate('.login-card', {
+    translateY: [40, 0],
+    opacity: [0, 1],
+    duration: 800,
+    easing: 'easeOutCubic'
+  })
+
+  // 学士帽
+  animate('.grad-cap', {
+    translateY: [0, -20, -8, -28, 0],
+    rotate: [-4, -2, -5, -3, -4],
+    duration: 22000,
+    loop: true,
+    easing: 'easeInOutSine'
+  })
+
+  // 翻开的书
+  animate('.open-book', {
+    translateY: [0, -26, 0],
+    scale: [1, 1.04, 1],
+    duration: 20000,
+    loop: true,
+    easing: 'easeInOutSine'
+  })
+
+  // 地球仪
+  animate('.globe', {
+    translateY: [0, -18, -30, 0],
+    rotate: [0, 3, -2, 0],
+    duration: 18000,
+    loop: true,
+    easing: 'easeInOutSine'
+  })
+
+  // 原子模型
+  animate('.atom', {
+    translateY: [0, -16, 0],
+    scale: [1, 1.06, 1],
+    duration: 24000,
+    loop: true,
+    easing: 'easeInOutSine'
+  })
+
+  // 钢笔
+  animate('.pen', {
+    translateY: [0, -14, -6, -20, 0],
+    rotate: [8, 10, 7, 9, 8],
+    duration: 16000,
+    loop: true,
+    easing: 'easeInOutSine'
+  })
+}
+
 onMounted(() => {
   refreshCaptcha()
   cleanupCanvas = initCanvas()
+  initFloatingShapes()
 })
 
 onUnmounted(() => {

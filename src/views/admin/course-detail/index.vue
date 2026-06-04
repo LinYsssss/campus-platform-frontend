@@ -111,6 +111,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import * as echarts from 'echarts'
+import { animate, stagger } from 'animejs'
 import { getCourseById } from '@/api/course'
 import { getCourseStudents } from '@/api/score'
 import { getEvaluationPage } from '@/api/evaluation'
@@ -163,15 +164,33 @@ const fetchEvaluations = async () => {
 
 const calcStats = () => {
   const list = studentScores.value
-  stats.totalStudents = list.length
+  const totalStudents = list.length
   const withScore = list.filter(s => s.totalScore != null)
-  if (withScore.length === 0) return
+  if (withScore.length === 0) { stats.totalStudents = totalStudents; return }
+
   const sum = withScore.reduce((a, s) => a + s.totalScore, 0)
-  stats.avgScore = Math.round(sum / withScore.length * 10) / 10
+  const avgScore = Math.round(sum / withScore.length * 10) / 10
   const passCount = withScore.filter(s => s.totalScore >= 60).length
-  stats.passRate = Math.round(passCount / withScore.length * 100)
+  const passRate = Math.round(passCount / withScore.length * 100)
   const excellentCount = withScore.filter(s => s.totalScore >= 90).length
-  stats.excellentRate = Math.round(excellentCount / withScore.length * 100)
+  const excellentRate = Math.round(excellentCount / withScore.length * 100)
+
+  // 数字滚动动画
+  const animTarget = { students: 0, avg: 0, pass: 0, excellent: 0 }
+  animate(animTarget, {
+    students: totalStudents,
+    avg: avgScore,
+    pass: passRate,
+    excellent: excellentRate,
+    duration: 1500,
+    easing: 'easeOutExpo',
+    onUpdate: () => {
+      stats.totalStudents = Math.round(animTarget.students)
+      stats.avgScore = Math.round(animTarget.avg * 10) / 10
+      stats.passRate = Math.round(animTarget.pass)
+      stats.excellentRate = Math.round(animTarget.excellent)
+    }
+  })
 }
 
 const renderChart = () => {
@@ -213,6 +232,15 @@ onMounted(() => {
   fetchStudents()
   fetchEvaluations()
   window.addEventListener('resize', handleResize)
+
+  // 卡片入场动画
+  animate('.stat-card', {
+    translateY: [24, 0],
+    opacity: [0, 1],
+    delay: stagger(120),
+    duration: 600,
+    easing: 'easeOutCubic'
+  })
 })
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
