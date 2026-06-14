@@ -5,11 +5,14 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>我的请假</span>
+            <div class="title-block">
+              <span class="card-title">我的请假</span>
+              <small>查看请假申请和审批结果</small>
+            </div>
             <el-button type="primary" @click="handleApply"><el-icon><Plus /></el-icon>申请请假</el-button>
           </div>
         </template>
-        <el-table :data="myLeaveList" v-loading="loading" stripe>
+        <el-table :data="myLeaveList" v-loading="loading" stripe class="business-table">
           <el-table-column prop="courseName" label="课程" />
           <el-table-column label="请假类型" width="90">
             <template #default="{ row }">
@@ -39,11 +42,16 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>请假审批</span>
-            <el-button @click="fetchLeavePage"><el-icon><Refresh /></el-icon>刷新</el-button>
+            <div class="title-block">
+              <span class="card-title">请假审批</span>
+              <small>处理学生课程请假申请</small>
+            </div>
+            <div class="header-actions">
+              <el-button @click="fetchLeavePage"><el-icon><Refresh /></el-icon>刷新</el-button>
+            </div>
           </div>
         </template>
-        <el-table :data="leavePageData" v-loading="loading" stripe>
+        <el-table :data="leavePageData" v-loading="loading" stripe class="business-table">
           <el-table-column prop="studentNo" label="学号" width="120" />
           <el-table-column prop="studentName" label="姓名" width="100" />
           <el-table-column prop="courseName" label="课程" />
@@ -64,13 +72,22 @@
               <el-tag v-else type="danger">已驳回</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right">
+          <el-table-column label="操作" width="150" fixed="right" align="center">
             <template #default="{ row }">
-              <template v-if="row.status === 0">
-                <el-button link type="success" @click="handleApprove(row, 1)">通过</el-button>
-                <el-button link type="danger" @click="handleApprove(row, 2)">驳回</el-button>
-              </template>
-              <span v-else style="color: #909399; font-size: 12px;">已处理</span>
+              <div v-if="row.status === 0" class="table-actions">
+                <el-button class="action-primary" size="small" @click="handleApprove(row, 1)">通过</el-button>
+                <el-dropdown trigger="click" @command="(command) => handleApproveCommand(command, row)">
+                  <el-button class="action-more" size="small">
+                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="reject" class="danger-item">驳回申请</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+              <el-button v-else class="action-more" size="small" disabled>已处理</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -199,6 +216,12 @@ const handleApprove = async (row, status) => {
   } catch (e) { console.error(e) }
 }
 
+const handleApproveCommand = (command, row) => {
+  if (command === 'reject') {
+    handleApprove(row, 2)
+  }
+}
+
 onMounted(() => {
   if (userRole.value === 'student') {
     fetchMyLeaves()
@@ -209,5 +232,84 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .card-header .el-button {
+    width: 100%;
+  }
+}
 </style>

@@ -3,8 +3,11 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>课表管理</span>
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="title-block">
+            <span class="card-title">课表管理</span>
+            <small>查看课程安排、排课和退课审批</small>
+          </div>
+          <div class="header-actions">
             <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="handleSemesterChange">
               <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
               <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
@@ -46,7 +49,7 @@
 
           <el-divider />
           <h4 style="margin: 0 0 12px;">我的选课</h4>
-          <el-table :data="mySelectedCourses" stripe>
+          <el-table :data="mySelectedCourses" stripe class="business-table">
             <el-table-column prop="courseName" label="课程名称" />
             <el-table-column prop="courseCode" label="课程代码" width="120" />
             <el-table-column prop="className" label="班级" width="80" />
@@ -58,9 +61,9 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column label="操作" width="120" fixed="right" align="center">
               <template #default="{ row }">
-                <el-button v-if="!row.hasDropRequest" link type="danger" @click="handleDropRequest(row)">申请退课</el-button>
+                <el-button v-if="!row.hasDropRequest" class="action-danger" size="small" @click="handleDropRequest(row)">申请退课</el-button>
                 <el-tag v-else type="warning" size="small">退课审批中</el-tag>
               </template>
             </el-table-column>
@@ -121,7 +124,7 @@
 
         <el-divider />
 
-        <el-table :data="timetableList" v-loading="loading" stripe>
+        <el-table :data="timetableList" v-loading="loading" stripe class="business-table">
           <el-table-column prop="courseName" label="课程名称" min-width="120" />
           <el-table-column prop="className" label="班级" width="120" />
           <el-table-column prop="teacherName" label="教师" width="100" />
@@ -136,10 +139,21 @@
           </el-table-column>
           <el-table-column prop="classroom" label="教室" width="120" />
           <el-table-column prop="semester" label="学期" width="130" />
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" width="150" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-              <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+              <div class="table-actions">
+                <el-button class="action-primary" size="small" @click="handleEdit(row)">编辑</el-button>
+                <el-dropdown trigger="click" @command="(command) => handleTimetableCommand(command, row)">
+                  <el-button class="action-more" size="small">
+                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="delete" class="danger-item">删除排课</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -150,17 +164,28 @@
           <span style="font-weight: 600;">退课申请管理</span>
           <el-button @click="fetchDropRequests"><el-icon><Refresh /></el-icon>刷新</el-button>
         </div>
-        <el-table :data="dropRequests" stripe>
+        <el-table :data="dropRequests" stripe class="business-table">
           <el-table-column prop="courseName" label="课程" />
           <el-table-column prop="className" label="班级" width="80" />
           <el-table-column prop="studentNo" label="学号" width="120" />
           <el-table-column prop="studentName" label="姓名" width="100" />
           <el-table-column prop="reason" label="退课原因" min-width="200" show-overflow-tooltip />
           <el-table-column prop="createTime" label="申请时间" width="170" />
-          <el-table-column label="操作" width="180" fixed="right">
+          <el-table-column label="操作" width="150" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button link type="success" @click="handleApprove(row, 1)">同意</el-button>
-              <el-button link type="danger" @click="handleApprove(row, 2)">驳回</el-button>
+              <div class="table-actions">
+                <el-button class="action-primary" size="small" @click="handleApprove(row, 1)">同意</el-button>
+                <el-dropdown trigger="click" @command="(command) => handleDropCommand(command, row)">
+                  <el-button class="action-more" size="small">
+                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="reject" class="danger-item">驳回申请</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -365,6 +390,12 @@ const handleApprove = async (row, status) => {
   } catch (e) { console.error(e) }
 }
 
+const handleDropCommand = (command, row) => {
+  if (command === 'reject') {
+    handleApprove(row, 2)
+  }
+}
+
 const fetchAvailableCourses = async () => {
   try {
     const res = await getAvailableCourses({ semester: selectedSemester.value })
@@ -442,6 +473,12 @@ const handleDelete = (row) => {
     .then(async () => { await deleteTimetable(row.id); ElMessage.success('删除成功'); fetchTimetable() })
 }
 
+const handleTimetableCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 onMounted(() => {
   fetchTimetable()
   if (userRole.value === 'student') {
@@ -453,7 +490,84 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-danger,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-danger {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-danger, #ff3b30), #ff7a59) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
 .timetable-grid { overflow-x: auto; margin-bottom: 16px; }
 .week-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .week-table th, .week-table td { border: 1px solid #ebeef5; padding: 8px; text-align: center; vertical-align: top; }
@@ -463,4 +577,21 @@ onMounted(() => {
 .course-block { background: #ecf5ff; border-radius: 4px; padding: 4px 6px; margin-bottom: 2px; border-left: 3px solid #409EFF; }
 .course-name { font-size: 12px; font-weight: 600; color: #409EFF; }
 .course-meta { font-size: 11px; color: #909399; }
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .header-actions .el-select,
+  .header-actions .el-button {
+    width: 100% !important;
+  }
+}
 </style>

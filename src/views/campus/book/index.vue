@@ -6,8 +6,11 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>{{ isAdmin ? '图书管理' : '图书检索' }}</span>
-              <div style="display: flex; gap: 8px;">
+              <div class="title-block">
+                <span class="card-title">{{ isAdmin ? '图书管理' : '图书检索' }}</span>
+                <small>检索馆藏图书，管理借阅与归还记录</small>
+              </div>
+              <div class="header-actions">
                 <el-button v-if="isAdmin" type="primary" @click="handleAddBook"><el-icon><Plus /></el-icon>新增图书</el-button>
               </div>
             </div>
@@ -16,13 +19,13 @@
             <el-form-item label="书名">
               <el-input v-model="searchForm.keyword" placeholder="书名/作者/ISBN" clearable />
             </el-form-item>
-            <el-form-item>
+            <el-form-item class="search-actions">
               <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
               <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
             </el-form-item>
           </el-form>
 
-          <el-table :data="bookList" v-loading="loading" stripe>
+          <el-table :data="bookList" v-loading="loading" stripe class="business-table">
             <el-table-column prop="bookName" label="书名" min-width="180" />
             <el-table-column prop="author" label="作者" width="120" />
             <el-table-column prop="publisher" label="出版社" width="140" />
@@ -35,20 +38,37 @@
               </template>
             </el-table-column>
             <el-table-column prop="location" label="位置" width="120" />
-            <el-table-column label="操作" :width="isAdmin ? 150 : 90" fixed="right">
+            <el-table-column label="操作" :width="isAdmin ? 150 : 110" fixed="right" align="center">
               <template #default="{ row }">
-                <el-button v-if="isAdmin" link type="primary" @click="handleEditBook(row)">编辑</el-button>
-                <el-button v-if="isAdmin" link type="danger" @click="handleDeleteBook(row)">删除</el-button>
-                <el-button v-if="!isAdmin && row.availableCount > 0" link type="primary" @click="handleBorrow(row)">借阅</el-button>
-                <el-button v-if="!isAdmin && row.availableCount <= 0" link disabled>暂无库存</el-button>
+                <div class="table-actions">
+                  <template v-if="isAdmin">
+                    <el-button class="action-primary" size="small" @click="handleEditBook(row)">编辑</el-button>
+                    <el-dropdown trigger="click" @command="(command) => handleBookCommand(command, row)">
+                      <el-button class="action-more" size="small">
+                        更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="delete" class="danger-item">删除图书</el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </template>
+                  <template v-else>
+                    <el-button v-if="row.availableCount > 0" class="action-primary" size="small" @click="handleBorrow(row)">借阅</el-button>
+                    <el-button v-else class="action-more" size="small" disabled>暂无库存</el-button>
+                  </template>
+                </div>
               </template>
             </el-table-column>
           </el-table>
 
-          <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50]" :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+          <div class="pagination-wrap">
+            <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize"
+              :page-sizes="[10, 20, 50]" :total="pagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+          </div>
         </el-card>
       </el-tab-pane>
 
@@ -61,7 +81,7 @@
               <el-button @click="fetchBorrowList"><el-icon><Refresh /></el-icon>刷新</el-button>
             </div>
           </template>
-          <el-table :data="borrowList" v-loading="loading" stripe>
+          <el-table :data="borrowList" v-loading="loading" stripe class="business-table">
             <el-table-column prop="bookName" label="书名" min-width="180" />
             <el-table-column prop="author" label="作者" width="120" />
             <el-table-column prop="borrowTime" label="借阅时间" width="170" />
@@ -73,9 +93,9 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="100">
+            <el-table-column label="操作" width="110" align="center">
               <template #default="{ row }">
-                <el-button v-if="row.status === 0 || row.status === 2" link type="primary" @click="handleReturn(row)">归还</el-button>
+                <el-button v-if="row.status === 0 || row.status === 2" class="action-primary" size="small" @click="handleReturn(row)">归还</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -87,7 +107,7 @@
       <el-tab-pane v-if="isAdmin" label="借阅记录" name="borrowRecords">
         <el-card shadow="never">
           <template #header><span>全部借阅记录</span></template>
-          <el-table :data="allBorrowList" v-loading="loading" stripe>
+          <el-table :data="allBorrowList" v-loading="loading" stripe class="business-table">
             <el-table-column prop="bookName" label="书名" min-width="150" />
             <el-table-column prop="author" label="作者" width="120" />
             <el-table-column prop="studentId" label="借阅人ID" width="100" />
@@ -235,6 +255,12 @@ const handleDeleteBook = (row) => {
     .then(async () => { await deleteBook(row.id); ElMessage.success('删除成功'); fetchBookList() })
 }
 
+const handleBookCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDeleteBook(row)
+  }
+}
+
 // 借阅/归还
 const handleBorrow = async (row) => {
   try { await borrowBook(row.id); ElMessage.success('借阅成功'); fetchBookList() } catch (e) { console.error(e) }
@@ -248,6 +274,102 @@ onMounted(() => { fetchBookList(); fetchBorrowList() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 16px; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-actions {
+  margin-left: auto !important;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  border-radius: 999px !important;
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .header-actions .el-button {
+    width: 100%;
+  }
+
+  .search-actions {
+    margin-left: 0 !important;
+  }
+
+  .pagination-wrap {
+    justify-content: center;
+  }
+}
 </style>

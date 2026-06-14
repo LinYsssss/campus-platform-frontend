@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { ElMessage } from 'element-plus'
 import { filterRoutes, ROLE_DEFAULT_PATH } from '@/utils/permission'
 
 // 路由配置（meta.roles 标记允许访问的角色）
@@ -28,7 +27,7 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '工作台', icon: 'HomeFilled', roles: ['admin', 'teacher', 'student'] }
+        meta: { title: '工作台', icon: 'HomeFilled', roles: ['admin', 'teacher', 'student'], affix: true }
       },
       // 系统管理 — 仅管理员
       {
@@ -196,7 +195,7 @@ const router = createRouter({
 const whiteList = ['/login', '/register', '/404']
 
 // 路由守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   // 设置页面标题
@@ -206,52 +205,41 @@ router.beforeEach(async (to, from, next) => {
 
   if (authStore.token) {
     if (to.path === '/login') {
-      next('/')
-    } else {
-      const appStore = useAppStore()
+      return to.query.redirect || '/'
+    }
 
-      // 过滤路由：只要 permissionRoutes 为空就执行（覆盖登录后首次跳转 和 页面刷新两种场景）
-      if (appStore.permissionRoutes.length === 0) {
-        try {
-          // userInfo 可能在 loginAction 中已提前加载，未加载则在此补充
-          if (!authStore.userInfo) {
-            await authStore.fetchUserInfo()
-          }
+    const appStore = useAppStore()
 
-          const userRole = authStore.userRole
-          const layoutRoute = routes.find(r => r.name === 'Layout')
-          const filtered = filterRoutes(layoutRoute.children, userRole)
-          appStore.setPermissionRoutes(filtered)
-
-          // 权限校验：目标路由不在可访问列表中则重定向
-          if (to.name && !isRouteAccessible(to, filtered)) {
-            const defaultPath = ROLE_DEFAULT_PATH[userRole] || '/dashboard'
-            next(defaultPath)
-            return
-          }
-        } catch (error) {
-          await authStore.logoutAction()
-          next('/login')
-          return
+    // 过滤路由：只要 permissionRoutes 为空就执行（覆盖登录后首次跳转和页面刷新）
+    if (appStore.permissionRoutes.length === 0) {
+      try {
+        if (!authStore.userInfo) {
+          await authStore.fetchUserInfo()
         }
-      } else {
-        // 路由已过滤，仅做权限校验
-        if (to.name && !isRouteAccessible(to, appStore.permissionRoutes)) {
-          const defaultPath = ROLE_DEFAULT_PATH[authStore.userRole] || '/dashboard'
-          next(defaultPath)
-          return
+
+        const userRole = authStore.userRole
+        const layoutRoute = routes.find(r => r.name === 'Layout')
+        const filtered = filterRoutes(layoutRoute.children, userRole)
+        appStore.setPermissionRoutes(filtered)
+
+        if (to.name && !isRouteAccessible(to, filtered)) {
+          return ROLE_DEFAULT_PATH[userRole] || '/dashboard'
         }
+      } catch (error) {
+        authStore.resetState()
+        return { path: '/login', query: { redirect: to.fullPath } }
       }
+    } else if (to.name && !isRouteAccessible(to, appStore.permissionRoutes)) {
+      return ROLE_DEFAULT_PATH[authStore.userRole] || '/dashboard'
+    }
 
-      next()
-    }
+    return true
+  }
+
+  if (whiteList.includes(to.path)) {
+    return true
   } else {
-    if (whiteList.includes(to.path)) {
-      next()
-    } else {
-      ElMessage.warning('请先登录')
-      next('/login')
-    }
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 })
 

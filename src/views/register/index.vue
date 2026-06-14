@@ -56,7 +56,7 @@
     <div class="register-card">
       <!-- Logo -->
       <div class="logo-area">
-        <img src="@/assets/logo.svg" class="logo-icon" alt="logo">
+        <img src="@/assets/campus-logo.jpg" class="logo-icon" alt="智慧校园 logo">
         <h1 class="title">Campus Platform</h1>
         <p class="subtitle">填写信息完成注册</p>
       </div>
@@ -553,7 +553,16 @@ onUnmounted(() => { if (animationId) cancelAnimationFrame(animationId); if (clea
 
 /* Logo */
 .logo-area { text-align: center; margin-bottom: 28px; }
-.logo-icon { width: 56px; height: 56px; margin-bottom: 16px; }
+.logo-icon {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 16px;
+  border-radius: 24px;
+  object-fit: cover;
+  object-position: center;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.14);
+}
 .title {
   font-family: var(--apple-font-display, "SF Pro Display", system-ui, -apple-system, sans-serif);
   font-size: 34px; font-weight: 600; letter-spacing: -0.374px; line-height: 1.1;
@@ -592,32 +601,59 @@ onUnmounted(() => { if (animationId) cancelAnimationFrame(animationId); if (clea
 .register-btn {
   width: 100%; height: 46px; font-size: 17px; font-weight: 400; letter-spacing: -0.374px;
   border-radius: 9999px !important;
-  background: transparent !important;
-  border: 1.5px solid var(--apple-hairline, #e0e0e0) !important;
-  color: var(--apple-ink, #1d1d1f) !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: var(--apple-glow-primary, 0 20px 70px rgba(37, 99, 235, 0.22));
 }
 .register-btn:hover {
-  border-color: var(--apple-chip, #d2d2d7) !important;
-  background: rgba(245, 245, 247, 0.6) !important;
+  filter: brightness(1.04);
 }
 .register-btn:active { transform: scale(0.97); }
 
 .goto-login-btn {
   width: 100%; height: 46px; font-size: 17px; font-weight: 400; letter-spacing: -0.374px;
   border-radius: 9999px !important;
-  background: var(--apple-ink, #1d1d1f) !important;
-  border: none !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+  color: var(--apple-ink, #1d1d1f) !important;
 }
-.goto-login-btn:hover { background: #333333 !important; }
+.goto-login-btn:hover { background: var(--apple-surface-strong, #ffffff) !important; }
 .goto-login-btn:active { transform: scale(0.97); }
 
 .eye-icon { cursor: pointer; color: var(--apple-ink-muted-48, #7a7a7a); }
 .eye-icon:hover { color: var(--apple-ink, #1d1d1f); }
 
-@media (max-width: 833px) { .floating-shapes { display: none; } }
+@media (max-width: 833px) {
+  .floating-shapes,
+  .particle-canvas { display: none; }
+}
 @media (max-width: 480px) {
-  .register-card { max-width: 100%; padding: 32px 24px; }
-  .title { font-size: 28px; }
+  .register-container {
+    align-items: flex-start;
+    padding: 18px 12px;
+  }
+
+  .register-card {
+    max-width: 100%;
+    padding: 28px 20px;
+    border-radius: 24px;
+  }
+
+  .title { font-size: 27px; }
+
+  .logo-icon {
+    width: 68px;
+    height: 68px;
+  }
+
+  .captcha-wrapper {
+    gap: 8px;
+  }
+
+  .captcha-img {
+    width: 104px;
+    min-width: 104px;
+  }
 }
 </style>

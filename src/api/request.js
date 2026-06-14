@@ -15,6 +15,28 @@ const request = axios.create({
   }
 })
 
+const ISO_DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/
+
+const normalizeDateTimeText = (value) => {
+  if (typeof value !== 'string') return value
+  return value.replace(ISO_DATE_TIME_RE, '$1 $2')
+}
+
+const normalizeResponseData = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeResponseData)
+  }
+
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach((key) => {
+      value[key] = normalizeResponseData(value[key])
+    })
+    return value
+  }
+
+  return normalizeDateTimeText(value)
+}
+
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
@@ -36,7 +58,7 @@ request.interceptors.response.use(
     
     // 成功响应
     if (code === 200) {
-      return data
+      return normalizeResponseData(data)
     }
     
     // 处理特定错误码

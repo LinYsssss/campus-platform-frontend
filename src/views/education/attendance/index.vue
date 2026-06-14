@@ -4,7 +4,12 @@
     <el-row :gutter="16" v-if="userRole === 'teacher'">
       <el-col :xs="24" :lg="8">
         <el-card shadow="never">
-          <template #header><span>发起考勤</span></template>
+          <template #header>
+            <div class="title-block">
+              <span class="card-title">发起考勤</span>
+              <small>选择课程和班级后生成签到码</small>
+            </div>
+          </template>
           <el-form :model="attendanceForm" label-width="100px">
             <el-form-item label="选择课程">
               <el-select v-model="attendanceForm.courseId" placeholder="请选择课程" style="width: 100%;" @change="handleCourseChange">
@@ -44,11 +49,16 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>考勤记录</span>
-              <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+              <div class="title-block">
+                <span class="card-title">考勤记录</span>
+                <small>查看课程考勤场次和签到统计</small>
+              </div>
+              <div class="header-actions">
+                <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+              </div>
             </div>
           </template>
-          <el-table :data="attendanceList" v-loading="loading" stripe>
+          <el-table :data="attendanceList" v-loading="loading" stripe class="business-table">
             <el-table-column prop="courseName" label="课程名称" min-width="120" />
             <el-table-column prop="className" label="班级" width="120" />
             <el-table-column prop="sessionCode" label="签到码" width="90" />
@@ -68,9 +78,9 @@
                 <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '进行中' : '已结束' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right">
+            <el-table-column label="操作" width="96" fixed="right" align="center">
               <template #default="{ row }">
-                <el-button link type="primary" @click="handleViewDetail(row)">详情</el-button>
+                <el-button class="action-primary" size="small" @click="handleViewDetail(row)">详情</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -83,11 +93,16 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>考勤记录</span>
-            <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+            <div class="title-block">
+              <span class="card-title">考勤记录</span>
+              <small>查看全校考勤场次和签到概览</small>
+            </div>
+            <div class="header-actions">
+              <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+            </div>
           </div>
         </template>
-        <el-table :data="attendanceList" v-loading="loading" stripe>
+        <el-table :data="attendanceList" v-loading="loading" stripe class="business-table">
           <el-table-column prop="courseName" label="课程名称" min-width="120" />
           <el-table-column prop="className" label="班级" width="100" />
           <el-table-column prop="sessionCode" label="签到码" width="90" />
@@ -105,9 +120,9 @@
               <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '进行中' : '已结束' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" fixed="right">
+          <el-table-column label="操作" width="96" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewDetail(row)">详情</el-button>
+              <el-button class="action-primary" size="small" @click="handleViewDetail(row)">详情</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -117,7 +132,12 @@
     <!-- 学生 -->
     <template v-if="userRole === 'student'">
       <el-card shadow="never">
-        <template #header><span>学生签到</span></template>
+        <template #header>
+          <div class="title-block">
+            <span class="card-title">学生签到</span>
+            <small>输入教师提供的签到码完成签到</small>
+          </div>
+        </template>
         <div class="student-sign">
           <el-input v-model="signCode" placeholder="请输入签到码" style="width: 240px; margin-right: 12px;" size="large" />
           <el-button type="primary" @click="handleSign" :loading="signing" size="large">立即签到</el-button>
@@ -127,12 +147,17 @@
       <el-card shadow="never" style="margin-top: 16px;">
         <template #header>
           <div class="card-header">
-            <span>我的考勤记录</span>
-            <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+            <div class="title-block">
+              <span class="card-title">我的考勤记录</span>
+              <small>查看个人签到状态和课程考勤情况</small>
+            </div>
+            <div class="header-actions">
+              <el-button @click="fetchData"><el-icon><Refresh /></el-icon>刷新</el-button>
+            </div>
           </div>
         </template>
-        <el-table :data="myAttendanceList" v-loading="loading" stripe>
-          <el-table-column prop="courseName" label="课程名称" />
+        <el-table :data="myAttendanceList" v-loading="loading" stripe class="business-table">
+          <el-table-column prop="courseName" label="课程名称" min-width="140" />
           <el-table-column prop="className" label="班级" width="100" />
           <el-table-column prop="signTime" label="签到时间" width="170" />
           <el-table-column label="签到状态" width="100">
@@ -388,9 +413,80 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.action-primary {
+  min-height: 30px;
+  padding: 6px 14px !important;
+  color: #ffffff !important;
+  font-size: 12px;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+  border-radius: 999px !important;
+}
+
 .session-info { margin-top: 20px; }
 .session-code { font-size: 28px; font-weight: bold; color: #409EFF; letter-spacing: 6px; }
 .student-sign { display: flex; align-items: center; padding: 20px; }
 h4 { margin: 0 0 12px; }
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .header-actions .el-button {
+    width: 100%;
+  }
+
+  .student-sign {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .student-sign .el-input,
+  .student-sign .el-button {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+}
 </style>

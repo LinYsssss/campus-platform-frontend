@@ -5,22 +5,36 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>字典类型</span>
+              <div class="title-block">
+                <span class="card-title">字典类型</span>
+                <small>维护系统通用字典分类</small>
+              </div>
               <el-button type="primary" @click="handleAddType"><el-icon><Plus /></el-icon>新增</el-button>
             </div>
           </template>
-          <el-table :data="dictTypeList" v-loading="loading" highlight-current-row @current-change="handleTypeSelect">
-            <el-table-column prop="dictName" label="字典名称" />
-            <el-table-column prop="dictType" label="字典标识" />
+          <el-table :data="dictTypeList" v-loading="loading" highlight-current-row class="dict-table" @current-change="handleTypeSelect">
+            <el-table-column prop="dictName" label="字典名称" min-width="120" />
+            <el-table-column prop="dictType" label="字典标识" min-width="150" />
             <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.status === 0 ? 'success' : 'danger'">{{ row.status === 0 ? '正常' : '停用' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120">
+            <el-table-column label="操作" width="150" align="center">
               <template #default="{ row }">
-                <el-button link type="primary" @click.stop="handleEditType(row)">编辑</el-button>
-                <el-button link type="danger" @click.stop="handleDeleteType(row)">删除</el-button>
+                <div class="table-actions" @click.stop>
+                  <el-button class="action-primary" size="small" @click="handleEditType(row)">编辑</el-button>
+                  <el-dropdown trigger="click" @command="(command) => handleTypeCommand(command, row)">
+                    <el-button class="action-more" size="small">
+                      更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="delete" class="danger-item">删除类型</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -31,23 +45,37 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>字典数据 {{ selectedType ? `(${selectedType.dictName})` : '' }}</span>
+              <div class="title-block">
+                <span class="card-title">字典数据 {{ selectedType ? `(${selectedType.dictName})` : '' }}</span>
+                <small>管理当前字典类型下的键值数据</small>
+              </div>
               <el-button type="primary" :disabled="!selectedType" @click="handleAddData"><el-icon><Plus /></el-icon>新增数据</el-button>
             </div>
           </template>
-          <el-table :data="dictDataList" v-loading="dataLoading">
-            <el-table-column prop="dictLabel" label="字典标签" />
-            <el-table-column prop="dictValue" label="字典值" />
+          <el-table :data="dictDataList" v-loading="dataLoading" class="dict-table">
+            <el-table-column prop="dictLabel" label="字典标签" min-width="120" />
+            <el-table-column prop="dictValue" label="字典值" min-width="120" />
             <el-table-column prop="sortOrder" label="排序" width="80" />
             <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.status === 0 ? 'success' : 'danger'">{{ row.status === 0 ? '正常' : '停用' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120">
+            <el-table-column label="操作" width="150" align="center">
               <template #default="{ row }">
-                <el-button link type="primary" @click="handleEditData(row)">编辑</el-button>
-                <el-button link type="danger" @click="handleDeleteData(row)">删除</el-button>
+                <div class="table-actions">
+                  <el-button class="action-primary" size="small" @click="handleEditData(row)">编辑</el-button>
+                  <el-dropdown trigger="click" @command="(command) => handleDataCommand(command, row)">
+                    <el-button class="action-more" size="small">
+                      更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="delete" class="danger-item">删除数据</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -156,6 +184,12 @@ const handleDeleteType = (row) => {
     .then(async () => { await deleteDictType(row.id); ElMessage.success('删除成功'); fetchTypeList() })
 }
 
+const handleTypeCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDeleteType(row)
+  }
+}
+
 const handleAddData = () => {
   isEditData.value = false; dataDialogTitle.value = '新增字典数据'
   Object.assign(dataForm, { id: null, dictType: selectedType.value.dictType, dictLabel: '', dictValue: '', sortOrder: 0, remark: '', status: 0 })
@@ -181,9 +215,84 @@ const handleDeleteData = (row) => {
     .then(async () => { await deleteDictData(row.id); ElMessage.success('删除成功'); handleTypeSelect(selectedType.value) })
 }
 
+const handleDataCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDeleteData(row)
+  }
+}
+
 onMounted(() => { fetchTypeList() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.dict-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-header .el-button {
+    width: 100%;
+  }
+}
 </style>

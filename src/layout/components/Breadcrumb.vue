@@ -33,10 +33,27 @@ watch(() => route.path, getBreadcrumbs, { immediate: true })
 <style scoped>
 .breadcrumb {
   font-size: 14px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.breadcrumb :deep(.el-breadcrumb__inner a) {
+  color: var(--apple-ink-muted-48, #7a7a7a);
+  font-weight: 500;
+}
+
+.breadcrumb :deep(.el-breadcrumb__inner a:hover) {
+  color: var(--apple-primary, #2563eb);
 }
 
 .no-redirect {
-  color: #97a8be;
+  color: var(--apple-ink, #1d1d1f);
+  font-weight: 600;
   cursor: text;
+}
+
+@media (max-width: 760px) {
+  .breadcrumb {
+    display: none;
+  }
 }
 </style>

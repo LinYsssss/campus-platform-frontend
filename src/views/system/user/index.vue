@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <el-card class="search-card" shadow="never">
-      <el-form :model="searchForm" inline>
+      <el-form :model="searchForm" inline class="search-form user-search-form">
         <el-form-item label="关键字">
           <el-input v-model="searchForm.keyword" placeholder="用户名/姓名" clearable />
         </el-form-item>
@@ -19,7 +19,7 @@
             <el-option label="锁定" :value="2" />
           </el-select>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-actions">
           <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
           <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
         </el-form-item>
@@ -29,7 +29,10 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>用户列表</span>
+          <div class="title-block">
+            <span class="card-title">用户列表</span>
+            <small>统一管理账号、角色与启停状态</small>
+          </div>
           <div class="header-actions">
             <el-button type="primary" @click="handleAdd"><el-icon><Plus /></el-icon>新增用户</el-button>
             <el-upload :show-file-list="false" :before-upload="handleImport" accept=".xlsx,.xls">
@@ -40,7 +43,7 @@
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="tableData" stripe>
+      <el-table v-loading="loading" :data="tableData" stripe class="user-table">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="realName" label="姓名" width="100" />
@@ -67,21 +70,34 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="primary" @click="handleResetPwd(row)">重置密码</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="table-actions">
+              <el-button class="action-primary" size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-dropdown trigger="click" @command="(command) => handleRowCommand(command, row)">
+                <el-button class="action-more" size="small">
+                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="resetPwd">重置密码</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="danger-item">删除用户</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination
-        v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange" @current-change="handleCurrentChange"
-      />
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]" :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange" @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" destroy-on-close>
@@ -218,6 +234,16 @@ const handleResetPwd = (row) => {
   }).then(async ({ value }) => { await resetPassword(row.id, value); ElMessage.success('密码已重置') })
 }
 
+const handleRowCommand = (command, row) => {
+  if (command === 'resetPwd') {
+    handleResetPwd(row)
+    return
+  }
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 const handleImport = async (file) => {
   try { const res = await importUser(file); ElMessage.success(res || '导入成功'); fetchData() } catch (e) { console.error(e) }
   return false
@@ -238,7 +264,131 @@ onMounted(() => { fetchData(); fetchRoleList() })
 </script>
 
 <style scoped>
-.search-card { margin-bottom: 16px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.header-actions { display: flex; gap: 10px; }
+.search-card {
+  margin-bottom: 16px;
+}
+
+.user-search-form {
+  margin-bottom: 0 !important;
+}
+
+.user-search-form :deep(.el-input) {
+  width: 220px;
+}
+
+.user-search-form :deep(.el-select) {
+  width: 120px;
+}
+
+.search-actions {
+  margin-left: auto !important;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.user-table {
+  margin-top: 4px;
+}
+
+.user-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.user-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  min-height: 30px;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .header-actions .el-button,
+  .header-actions :deep(.el-upload) {
+    width: 100%;
+  }
+
+  .search-actions {
+    margin-left: 0 !important;
+  }
+
+  .user-search-form :deep(.el-input),
+  .user-search-form :deep(.el-select) {
+    width: 100%;
+  }
+
+  .pagination-wrap {
+    justify-content: center;
+  }
+}
 </style>

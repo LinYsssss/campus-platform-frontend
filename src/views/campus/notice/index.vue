@@ -3,10 +3,15 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>公告通知</span>
-          <el-button v-if="isAdmin" type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>发布公告
-          </el-button>
+          <div class="title-block">
+            <span class="card-title">公告通知</span>
+            <small>发布、维护和查看校园公告信息</small>
+          </div>
+          <div class="header-actions">
+            <el-button v-if="isAdmin" type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>发布公告
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -14,13 +19,13 @@
         <el-form-item label="标题">
           <el-input v-model="searchForm.keyword" placeholder="请输入标题" clearable />
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-actions">
           <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
           <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
         </el-form-item>
       </el-form>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table :data="tableData" v-loading="loading" stripe class="business-table">
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
         <el-table-column prop="publisherName" label="发布人" width="120" />
         <el-table-column prop="publishTime" label="发布时间" width="180" />
@@ -29,16 +34,29 @@
             <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '已发布' : '草稿' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" :width="isAdmin ? 150 : 96" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleView(row)">查看</el-button>
-            <el-button v-if="isAdmin" link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button v-if="isAdmin" link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="table-actions">
+              <el-button class="action-primary" size="small" @click="handleView(row)">查看</el-button>
+              <el-dropdown v-if="isAdmin" trigger="click" @command="(command) => handleRowCommand(command, row)">
+                <el-button class="action-more" size="small">
+                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑公告</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="danger-item">删除公告</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+      <div class="pagination-wrap">
+        <el-pagination v-model:current-page="pagination.pageNum" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+      </div>
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px">
@@ -118,6 +136,15 @@ const handleDelete = (row) => { ElMessageBox.confirm(`确定要删除公告 "${r
 const viewDialogVisible = ref(false)
 const viewData = ref({})
 const handleView = (row) => { viewData.value = row; viewDialogVisible.value = true }
+const handleRowCommand = (command, row) => {
+  if (command === 'edit') {
+    handleEdit(row)
+    return
+  }
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
 const handleSizeChange = (val) => { pagination.pageSize = val; fetchData() }
 const handleCurrentChange = (val) => { pagination.pageNum = val; fetchData() }
 
@@ -125,6 +152,102 @@ onMounted(() => { fetchData() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-actions {
+  margin-left: auto !important;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  border-radius: 999px !important;
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .header-actions .el-button {
+    width: 100%;
+  }
+
+  .search-actions {
+    margin-left: 0 !important;
+  }
+
+  .pagination-wrap {
+    justify-content: center;
+  }
+}
 </style>

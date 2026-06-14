@@ -3,12 +3,15 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>菜单管理</span>
+          <div class="title-block">
+            <span class="card-title">菜单管理</span>
+            <small>维护系统菜单、路由路径和权限标识</small>
+          </div>
           <el-button type="primary" @click="handleAdd()"><el-icon><Plus /></el-icon>新增菜单</el-button>
         </div>
       </template>
 
-      <el-table :data="tableData" row-key="id" default-expand-all>
+      <el-table :data="tableData" row-key="id" default-expand-all class="menu-table">
         <el-table-column prop="menuName" label="菜单名称" min-width="180">
           <template #default="{ row }">
             <el-icon v-if="row.icon"><component :is="row.icon" /></el-icon>
@@ -36,11 +39,22 @@
             <el-tag :type="row.status === 0 ? 'success' : 'danger'">{{ row.status === 0 ? '正常' : '停用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleAdd(row)">新增</el-button>
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="table-actions">
+              <el-button class="action-primary" size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-dropdown trigger="click" @command="(command) => handleRowCommand(command, row)">
+                <el-button class="action-more" size="small">
+                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="add">新增子级</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="danger-item">删除菜单</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -152,9 +166,92 @@ const handleDelete = (row) => {
     .then(async () => { await deleteMenu(row.id); ElMessage.success('删除成功'); fetchData() })
 }
 
+const handleRowCommand = (command, row) => {
+  if (command === 'add') {
+    handleAdd(row)
+    return
+  }
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 onMounted(() => { fetchData() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.menu-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.menu-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-header .el-button {
+    width: 100%;
+  }
+}
 </style>

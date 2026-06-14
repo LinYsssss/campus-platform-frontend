@@ -3,10 +3,15 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>{{ isAdmin ? '课程浏览' : '课程管理' }}</span>
-          <el-button v-if="!isAdmin" type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>新增课程
-          </el-button>
+          <div class="title-block">
+            <span class="card-title">{{ isAdmin ? '课程浏览' : '课程管理' }}</span>
+            <small>维护课程基础信息、任课教师和关联班级</small>
+          </div>
+          <div class="header-actions">
+            <el-button v-if="!isAdmin" type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>新增课程
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -17,13 +22,13 @@
         <el-form-item label="学期">
           <el-input v-model="searchForm.semester" placeholder="如 2025-2026-1" clearable />
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-actions">
           <el-button type="primary" @click="handleSearch"><el-icon><Search /></el-icon>搜索</el-button>
           <el-button @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
         </el-form-item>
       </el-form>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table :data="tableData" v-loading="loading" stripe class="business-table">
         <el-table-column prop="courseCode" label="课程代码" width="120" />
         <el-table-column prop="courseName" label="课程名称" min-width="150" />
         <el-table-column prop="credit" label="学分" width="80" />
@@ -45,26 +50,37 @@
             <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '正常' : '已结课' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" :width="isAdmin ? 80 : 200" fixed="right">
+        <el-table-column label="操作" :width="isAdmin ? 96 : 150" fixed="right" align="center">
           <template #default="{ row }">
-            <template v-if="!isAdmin">
-              <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-              <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
-            </template>
-            <el-button link type="primary" @click="handleView(row)">详情</el-button>
+            <div class="table-actions">
+              <el-button class="action-primary" size="small" @click="handleView(row)">详情</el-button>
+              <el-dropdown v-if="!isAdmin" trigger="click" @command="(command) => handleRowCommand(command, row)">
+                <el-button class="action-more" size="small">
+                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑课程</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="danger-item">删除课程</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination
-        v-model:current-page="pagination.pageNum"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pagination.pageNum"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -304,6 +320,16 @@ const handleDelete = (row) => {
     })
 }
 
+const handleRowCommand = (command, row) => {
+  if (command === 'edit') {
+    handleEdit(row)
+    return
+  }
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 const removeClass = (cls) => {
   formData.classNames = formData.classNames.filter(c => c !== cls)
 }
@@ -336,6 +362,103 @@ onMounted(() => { fetchData() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.search-actions {
+  margin-left: auto !important;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  border-radius: 999px !important;
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .header-actions .el-button {
+    width: 100%;
+  }
+
+  .search-actions {
+    margin-left: 0 !important;
+  }
+
+  .pagination-wrap {
+    justify-content: center;
+  }
+}
 </style>

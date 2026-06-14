@@ -19,15 +19,25 @@ export const useAppStore = defineStore('app', () => {
     sidebarCollapsed.value = !sidebarCollapsed.value
   }
 
+  function closeSidebar() {
+    sidebarCollapsed.value = true
+  }
+
   function setSidebarCollapsed(collapsed) {
     sidebarCollapsed.value = collapsed
   }
 
-  function toggleDevice(val) {
+  function setDevice(val) {
     device.value = val
     if (val === 'mobile') {
       sidebarCollapsed.value = true
+    } else {
+      sidebarCollapsed.value = false
     }
+  }
+
+  function toggleDevice(val) {
+    setDevice(val)
   }
 
   function addVisitedView(view) {
@@ -36,7 +46,8 @@ export const useAppStore = defineStore('app', () => {
       name: view.name,
       path: view.path,
       title: view.meta?.title || 'no-name',
-      fullPath: view.fullPath
+      fullPath: view.fullPath,
+      meta: view.meta || {}
     })
   }
 
@@ -73,6 +84,10 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function initTheme() {
+    updateHtmlClass()
+  }
+
   function setPermissionRoutes(routes) {
     permissionRoutes.value = routes
   }
@@ -87,13 +102,16 @@ export const useAppStore = defineStore('app', () => {
     isMobile,
     isDark,
     toggleSidebar,
+    closeSidebar,
     setSidebarCollapsed,
+    setDevice,
     toggleDevice,
     addVisitedView,
     removeVisitedView,
     addCachedView,
     toggleTheme,
     setTheme,
+    initTheme,
     setPermissionRoutes
   }
 })

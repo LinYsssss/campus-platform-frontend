@@ -5,8 +5,11 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>成绩管理</span>
-            <div style="display: flex; gap: 12px;">
+            <div class="title-block">
+              <span class="card-title">成绩管理</span>
+              <small>录入课程成绩并自动计算总评</small>
+            </div>
+            <div class="header-actions">
               <el-select v-model="selectedCourseId" placeholder="选择课程" style="width: 200px;" @change="handleCourseChange">
                 <el-option v-for="c in courseList" :key="c.id" :label="c.courseName" :value="c.id" />
               </el-select>
@@ -28,7 +31,7 @@
         <el-empty v-if="!selectedCourseId" description="请先选择课程" />
         <el-empty v-else-if="studentScores.length === 0" description="暂无学生选课" />
 
-        <el-table v-else :data="studentScores" v-loading="loading" stripe>
+        <el-table v-else :data="studentScores" v-loading="loading" stripe class="business-table">
           <el-table-column prop="studentNo" label="学号" width="120" />
           <el-table-column prop="studentName" label="姓名" width="100" />
           <el-table-column prop="className" label="班级" width="80" />
@@ -64,9 +67,9 @@
               <el-tag v-else-if="row.status === 2" type="success">归档</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" fixed="right">
+          <el-table-column label="操作" width="110" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleSave(row)" :disabled="row.status === 2">
+              <el-button class="action-primary" size="small" @click="handleSave(row)" :disabled="row.status === 2">
                 {{ row.scoreId ? '更新' : '保存' }}
               </el-button>
             </template>
@@ -80,11 +83,16 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>成绩审核</span>
-            <el-button @click="fetchScores"><el-icon><Refresh /></el-icon>刷新</el-button>
+            <div class="title-block">
+              <span class="card-title">成绩审核</span>
+              <small>归档或驳回教师提交的成绩</small>
+            </div>
+            <div class="header-actions">
+              <el-button @click="fetchScores"><el-icon><Refresh /></el-icon>刷新</el-button>
+            </div>
           </div>
         </template>
-        <el-table :data="allScores" stripe>
+        <el-table :data="allScores" stripe class="business-table">
           <el-table-column prop="courseName" label="课程名称" min-width="120" />
           <el-table-column prop="courseCode" label="课程代码" width="100" />
           <el-table-column prop="totalScore" label="总成绩" width="80" />
@@ -96,10 +104,21 @@
               <el-tag v-else-if="row.status === 2" type="success">归档</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="180">
+          <el-table-column label="操作" width="150" align="center">
             <template #default="{ row }">
-              <el-button link type="success" @click="handleAudit(row, 2)" :disabled="row.status === 2">归档</el-button>
-              <el-button link type="danger" @click="handleAudit(row, 1)" :disabled="row.status === 2">驳回</el-button>
+              <div class="table-actions">
+                <el-button class="action-primary" size="small" @click="handleAudit(row, 2)" :disabled="row.status === 2">归档</el-button>
+                <el-dropdown trigger="click" @command="(command) => handleAuditCommand(command, row)">
+                  <el-button class="action-more" size="small" :disabled="row.status === 2">
+                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="reject" class="danger-item">驳回成绩</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -111,14 +130,19 @@
       <el-card shadow="never">
         <template #header>
           <div class="card-header">
-            <span>我的成绩</span>
-            <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="fetchMyScores">
-              <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
-              <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
-            </el-select>
+            <div class="title-block">
+              <span class="card-title">我的成绩</span>
+              <small>查看各学期课程成绩和归档状态</small>
+            </div>
+            <div class="header-actions">
+              <el-select v-model="selectedSemester" placeholder="选择学期" style="width: 200px;" @change="fetchMyScores">
+                <el-option label="2025-2026学年第一学期" value="2025-2026-1" />
+                <el-option label="2025-2026学年第二学期" value="2025-2026-2" />
+              </el-select>
+            </div>
           </div>
         </template>
-        <el-table :data="myScores" v-loading="loading" stripe>
+        <el-table :data="myScores" v-loading="loading" stripe class="business-table">
           <el-table-column prop="courseName" label="课程名称" />
           <el-table-column prop="regularScore" label="平时成绩" width="100">
             <template #default="{ row }">{{ row.regularScore ?? '-' }}</template>
@@ -262,6 +286,12 @@ const handleAudit = async (row, status) => {
   } catch (e) { console.error(e) }
 }
 
+const handleAuditCommand = (command, row) => {
+  if (command === 'reject') {
+    handleAudit(row, 1)
+  }
+}
+
 // 学生查看成绩
 const fetchMyScores = async () => {
   loading.value = true
@@ -282,5 +312,90 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .header-actions .el-select,
+  .header-actions .el-button {
+    width: 100% !important;
+  }
+}
 </style>

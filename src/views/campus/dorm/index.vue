@@ -8,20 +8,34 @@
           <el-card shadow="never">
             <template #header>
               <div class="card-header">
-                <span>楼栋列表</span>
+                <div class="title-block">
+                  <span class="card-title">楼栋列表</span>
+                  <small>维护宿舍楼栋和宿管信息</small>
+                </div>
                 <el-button type="primary" @click="handleAddBuilding"><el-icon><Plus /></el-icon>新增楼栋</el-button>
               </div>
             </template>
-            <el-table :data="buildingList" v-loading="loading" stripe>
+            <el-table :data="buildingList" v-loading="loading" stripe class="business-table">
               <el-table-column prop="buildingName" label="楼栋名称" />
               <el-table-column prop="buildingCode" label="编号" width="100" />
               <el-table-column prop="floorCount" label="楼层数" width="80" />
               <el-table-column prop="managerName" label="宿管" width="100" />
               <el-table-column prop="managerPhone" label="宿管电话" width="130" />
-              <el-table-column label="操作" width="150">
+              <el-table-column label="操作" width="150" align="center">
                 <template #default="{ row }">
-                  <el-button link type="primary" @click="handleEditBuilding(row)">编辑</el-button>
-                  <el-button link type="danger" @click="handleDeleteBuilding(row)">删除</el-button>
+                  <div class="table-actions">
+                    <el-button class="action-primary" size="small" @click="handleEditBuilding(row)">编辑</el-button>
+                    <el-dropdown trigger="click" @command="(command) => handleBuildingCommand(command, row)">
+                      <el-button class="action-more" size="small">
+                        更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="delete" class="danger-item">删除楼栋</el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -33,8 +47,11 @@
           <el-card shadow="never">
             <template #header>
               <div class="card-header">
-                <span>房间列表</span>
-                <div>
+                <div class="title-block">
+                  <span class="card-title">房间列表</span>
+                  <small>维护房间床位与使用状态</small>
+                </div>
+                <div class="header-actions">
                   <el-select v-model="roomFilterBuildingId" placeholder="筛选楼栋" clearable style="width: 160px; margin-right: 8px;" @change="fetchRoomList">
                     <el-option v-for="b in buildingList" :key="b.id" :label="b.buildingName" :value="b.id" />
                   </el-select>
@@ -42,7 +59,7 @@
                 </div>
               </div>
             </template>
-            <el-table :data="roomList" v-loading="loading" stripe>
+            <el-table :data="roomList" v-loading="loading" stripe class="business-table">
               <el-table-column label="楼栋" width="120">
                 <template #default="{ row }">{{ getBuildingName(row.buildingId) }}</template>
               </el-table-column>
@@ -57,9 +74,9 @@
                   <el-tag v-else type="danger">维修中</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="100">
+              <el-table-column label="操作" width="110" align="center">
                 <template #default="{ row }">
-                  <el-button link type="primary" @click="handleEditRoom(row)">编辑</el-button>
+                  <el-button class="action-primary" size="small" @click="handleEditRoom(row)">编辑</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -71,11 +88,14 @@
           <el-card shadow="never">
             <template #header>
               <div class="card-header">
-                <span>分配记录</span>
+                <div class="title-block">
+                  <span class="card-title">分配记录</span>
+                  <small>查看和管理住宿分配情况</small>
+                </div>
                 <el-button type="primary" @click="handleAllocate"><el-icon><Plus /></el-icon>分配宿舍</el-button>
               </div>
             </template>
-            <el-table :data="allocationList" v-loading="loading" stripe>
+            <el-table :data="allocationList" v-loading="loading" stripe class="business-table">
               <el-table-column prop="userNo" label="学号/工号" width="120" />
               <el-table-column prop="userName" label="姓名" width="100" />
               <el-table-column label="身份" width="70">
@@ -89,9 +109,9 @@
               <el-table-column prop="roomCode" label="房间号" width="80" />
               <el-table-column prop="bedNumber" label="床位" width="60" />
               <el-table-column prop="checkInDate" label="入住时间" width="120" />
-              <el-table-column label="操作" width="80">
+              <el-table-column label="操作" width="110" align="center">
                 <template #default="{ row }">
-                  <el-button link type="danger" @click="handleDeallocate(row)">退宿</el-button>
+                  <el-button class="action-danger" size="small" @click="handleDeallocate(row)">退宿</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -103,11 +123,16 @@
           <el-card shadow="never">
             <template #header>
               <div class="card-header">
-                <span>换宿申请</span>
-                <el-button @click="fetchSwapList"><el-icon><Refresh /></el-icon>刷新</el-button>
+                <div class="title-block">
+                  <span class="card-title">换宿申请</span>
+                  <small>审批学生和教师提交的换宿请求</small>
+                </div>
+                <div class="header-actions">
+                  <el-button @click="fetchSwapList"><el-icon><Refresh /></el-icon>刷新</el-button>
+                </div>
               </div>
             </template>
-            <el-table :data="swapList" v-loading="loading" stripe>
+            <el-table :data="swapList" v-loading="loading" stripe class="business-table">
               <el-table-column prop="userNo" label="学号/工号" width="120" />
               <el-table-column prop="userName" label="姓名" width="100" />
               <el-table-column label="身份" width="70">
@@ -126,13 +151,22 @@
                   <el-tag v-else type="danger">已驳回</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="160" fixed="right">
+              <el-table-column label="操作" width="150" fixed="right" align="center">
                 <template #default="{ row }">
-                  <template v-if="row.status === 0">
-                    <el-button link type="success" @click="handleApproveSwap(row, 1)">同意</el-button>
-                    <el-button link type="danger" @click="handleApproveSwap(row, 2)">驳回</el-button>
-                  </template>
-                  <span v-else style="color: #909399; font-size: 12px;">已处理</span>
+                  <div v-if="row.status === 0" class="table-actions">
+                    <el-button class="action-primary" size="small" @click="handleApproveSwap(row, 1)">同意</el-button>
+                    <el-dropdown trigger="click" @command="(command) => handleSwapCommand(command, row)">
+                      <el-button class="action-more" size="small">
+                        更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="reject" class="danger-item">驳回申请</el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                  <el-button v-else class="action-more" size="small" disabled>已处理</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -146,7 +180,12 @@
     <template v-else>
       <!-- 我的宿舍 -->
       <el-card shadow="never" style="margin-bottom: 16px;">
-        <template #header><span>我的宿舍</span></template>
+        <template #header>
+          <div class="title-block">
+            <span class="card-title">我的宿舍</span>
+            <small>查看当前住宿信息并提交换宿申请</small>
+          </div>
+        </template>
         <div v-if="myAllocation" style="display: flex; gap: 32px; align-items: center;">
           <div>
             <div style="font-size: 13px; color: #909399;">楼栋</div>
@@ -175,8 +214,13 @@
 
       <!-- 我的换宿申请 -->
       <el-card shadow="never">
-        <template #header><span>我的换宿申请</span></template>
-        <el-table :data="mySwapList" stripe>
+        <template #header>
+          <div class="title-block">
+            <span class="card-title">我的换宿申请</span>
+            <small>查看换宿申请状态和审批意见</small>
+          </div>
+        </template>
+        <el-table :data="mySwapList" stripe class="business-table">
           <el-table-column prop="targetRoomId" label="目标房间ID" width="120" />
           <el-table-column prop="reason" label="原因" min-width="200" />
           <el-table-column label="状态" width="90">
@@ -343,6 +387,12 @@ const handleDeleteBuilding = (row) => {
     .then(async () => { await deleteBuilding(row.id); ElMessage.success('删除成功'); fetchBuildingList() })
 }
 
+const handleBuildingCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDeleteBuilding(row)
+  }
+}
+
 const getBuildingName = (id) => buildingList.value.find(b => b.id === id)?.buildingName || ''
 
 // ========== 房间 ==========
@@ -482,6 +532,12 @@ const handleApproveSwap = async (row, status) => {
   } catch (e) { console.error(e) }
 }
 
+const handleSwapCommand = (command, row) => {
+  if (command === 'reject') {
+    handleApproveSwap(row, 2)
+  }
+}
+
 // ========== 初始化 ==========
 onMounted(() => {
   fetchBuildingList()
@@ -494,5 +550,100 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.business-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.business-table :deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 24px rgba(15, 23, 42, 0.04);
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-danger,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-danger {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-danger, #ff3b30), #ff7a59) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .header-actions .el-select,
+  .header-actions .el-button,
+  .card-header > .el-button {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+}
 </style>

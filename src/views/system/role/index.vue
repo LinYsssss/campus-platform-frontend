@@ -5,22 +5,36 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>角色列表</span>
+              <div class="title-block">
+                <span class="card-title">角色列表</span>
+                <small>管理系统角色和启停状态</small>
+              </div>
               <el-button type="primary" @click="handleAdd"><el-icon><Plus /></el-icon>新增</el-button>
             </div>
           </template>
-          <el-table :data="roleList" v-loading="loading" highlight-current-row @current-change="handleRoleSelect">
-            <el-table-column prop="roleName" label="角色名称" />
-            <el-table-column prop="roleKey" label="角色标识" />
+          <el-table :data="roleList" v-loading="loading" highlight-current-row class="role-table" @current-change="handleRoleSelect">
+            <el-table-column prop="roleName" label="角色名称" min-width="120" />
+            <el-table-column prop="roleKey" label="角色标识" min-width="120" />
             <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '正常' : '停用' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150">
+            <el-table-column label="操作" width="150" align="center">
               <template #default="{ row }">
-                <el-button link type="primary" @click.stop="handleEdit(row)">编辑</el-button>
-                <el-button link type="danger" @click.stop="handleDelete(row)">删除</el-button>
+                <div class="table-actions" @click.stop>
+                  <el-button class="action-primary" size="small" @click="handleEdit(row)">编辑</el-button>
+                  <el-dropdown trigger="click" @command="(command) => handleRoleCommand(command, row)">
+                    <el-button class="action-more" size="small">
+                      更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="delete" class="danger-item">删除角色</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -31,7 +45,10 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <span>菜单权限 {{ selectedRole ? `(${selectedRole.roleName})` : '' }}</span>
+              <div class="title-block">
+                <span class="card-title">菜单权限 {{ selectedRole ? `(${selectedRole.roleName})` : '' }}</span>
+                <small>为当前角色分配菜单和按钮权限</small>
+              </div>
               <el-button type="primary" :disabled="!selectedRole" @click="handleSavePermission">
                 <el-icon><Check /></el-icon>保存权限
               </el-button>
@@ -151,6 +168,12 @@ const handleDelete = (row) => {
     .then(async () => { await deleteRole(row.id); ElMessage.success('删除成功'); fetchData() })
 }
 
+const handleRoleCommand = (command, row) => {
+  if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 const handleSavePermission = async () => {
   if (!selectedRole.value) return
   const checkedKeys = menuTreeRef.value.getCheckedKeys()
@@ -166,5 +189,74 @@ onMounted(() => { fetchData(); fetchMenuTree() })
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-ink, #1d1d1f);
+}
+
+.title-block small {
+  font-size: 12px;
+  color: var(--apple-ink-muted-48, #7a7a7a);
+}
+
+.role-table :deep(.el-table__cell) {
+  padding: 14px 0;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-primary,
+.action-more {
+  min-height: 30px;
+  padding: 6px 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+}
+
+.action-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+}
+
+.action-more {
+  color: var(--apple-ink, #1d1d1f) !important;
+  background: var(--apple-parchment, #f5f5f7) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+}
+
+.danger-item {
+  color: var(--apple-danger, #ff3b30) !important;
+}
+
+@media (max-width: 900px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-header .el-button {
+    width: 100%;
+  }
+}
 </style>

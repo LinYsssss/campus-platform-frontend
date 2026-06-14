@@ -53,10 +53,10 @@
       </svg>
     </div>
 
-    <div class="login-card">
+    <div class="login-card glass-panel">
       <!-- Logo -->
       <div class="logo-area">
-        <img src="@/assets/logo.svg" class="logo-icon" alt="logo">
+        <img src="@/assets/campus-logo.jpg" class="logo-icon" alt="智慧校园 logo">
         <h1 class="title">Campus Platform</h1>
         <p class="subtitle">一体化智慧校园管理系统</p>
       </div>
@@ -103,8 +103,9 @@
               clearable
               class="captcha-input"
             />
-            <div class="captcha-img" @click="refreshCaptcha">
-              <img v-if="captchaImage" :src="captchaImage" alt="验证码">
+            <div class="captcha-img" :class="{ loading: captchaLoading }" @click="refreshCaptcha">
+              <img v-if="captchaImage && !captchaLoading" :src="captchaImage" alt="点击刷新验证码">
+              <el-icon v-else-if="captchaLoading" class="captcha-loading"><Loading /></el-icon>
               <span v-else class="refresh-text">刷新</span>
             </div>
           </div>
@@ -112,7 +113,7 @@
 
         <div class="form-options">
           <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-          <a href="#" class="text-link">忘记密码？</a>
+          <button type="button" class="text-link" @click="showForgotTip">忘记密码？</button>
         </div>
 
         <el-form-item>
@@ -142,20 +143,23 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const loginFormRef = ref(null)
 const loading = ref(false)
-const rememberMe = ref(false)
+const rememberMe = ref(localStorage.getItem('rememberUsername') === '1')
 const captchaImage = ref('')
+const captchaLoading = ref(false)
 const showPassword = ref(false)
 const canvasRef = ref(null)
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const loginForm = ref({
   username: '',
@@ -177,12 +181,21 @@ const loginRules = {
 }
 
 const refreshCaptcha = async () => {
+  if (captchaLoading.value) return
+  captchaLoading.value = true
   try {
     await authStore.fetchCaptcha()
     captchaImage.value = authStore.captchaImage
   } catch (error) {
     console.error('获取验证码失败', error)
+    ElMessage.error('验证码加载失败，请检查后端服务')
+  } finally {
+    captchaLoading.value = false
   }
+}
+
+const showForgotTip = () => {
+  ElMessage.info('请联系系统管理员重置密码')
 }
 
 const handleLogin = async () => {
@@ -194,8 +207,15 @@ const handleLogin = async () => {
     loading.value = true
     try {
       await authStore.loginAction(loginForm.value)
+      if (rememberMe.value) {
+        localStorage.setItem('rememberUsername', '1')
+        localStorage.setItem('lastUsername', loginForm.value.username)
+      } else {
+        localStorage.removeItem('rememberUsername')
+        localStorage.removeItem('lastUsername')
+      }
       ElMessage.success('登录成功')
-      router.push('/')
+      router.push(route.query.redirect || '/')
     } catch (error) {
       refreshCaptcha()
     } finally {
@@ -234,7 +254,7 @@ class Particle {
 
 function initCanvas() {
   const canvas = canvasRef.value
-  if (!canvas) return
+  if (!canvas || reduceMotion || window.innerWidth < 768) return
   const ctx = canvas.getContext('2d')
 
   function resize() {
@@ -315,6 +335,7 @@ function initCanvas() {
 let cleanupCanvas = null
 
 const initFloatingShapes = () => {
+  if (reduceMotion) return
   // 登录卡片入场
   animate('.login-card', {
     translateY: [40, 0],
@@ -370,6 +391,9 @@ const initFloatingShapes = () => {
 }
 
 onMounted(() => {
+  if (rememberMe.value) {
+    loginForm.value.username = localStorage.getItem('lastUsername') || ''
+  }
   refreshCaptcha()
   cleanupCanvas = initCanvas()
   initFloatingShapes()
@@ -390,7 +414,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #fafafc 0%, #f0f0f2 50%, #e8e8ea 100%);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.16), transparent 28%),
+    radial-gradient(circle at 82% 78%, rgba(14, 165, 233, 0.16), transparent 30%),
+    linear-gradient(135deg, #fafafc 0%, #eef4ff 46%, #f8fafc 100%);
   padding: 24px;
   position: relative;
   overflow: hidden;
@@ -411,13 +438,13 @@ onUnmounted(() => {
   max-width: 400px;
   position: relative;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.78);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
+  border-radius: var(--apple-radius-xl, 28px);
   padding: 48px 40px;
-  box-shadow: 0 8px 60px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--apple-shadow-soft, 0 8px 60px rgba(0, 0, 0, 0.06));
 }
 
 /* ============================================================
@@ -565,9 +592,14 @@ onUnmounted(() => {
 }
 
 .logo-icon {
-  width: 56px;
-  height: 56px;
+  width: 76px;
+  height: 76px;
   margin-bottom: 16px;
+  border-radius: 24px;
+  object-fit: cover;
+  object-position: center;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.14);
 }
 
 .title {
@@ -640,11 +672,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(224, 224, 224, 0.5);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 .captcha-img:hover {
   border-color: var(--apple-chip, #d2d2d7);
+  transform: translateY(-1px);
+}
+
+.captcha-img.loading {
+  cursor: wait;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .captcha-img img {
@@ -656,6 +694,16 @@ onUnmounted(() => {
 .refresh-text {
   color: var(--apple-ink-muted-48, #7a7a7a);
   font-size: 12px;
+}
+
+.captcha-loading {
+  color: var(--apple-primary, #2563eb);
+  animation: captcha-spin 0.8s linear infinite;
+}
+
+@keyframes captcha-spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
 }
 
 .form-options {
@@ -677,11 +725,16 @@ onUnmounted(() => {
 }
 
 .text-link {
+  border: none;
+  background: transparent;
+  padding: 0;
   color: var(--apple-link, #0066cc);
   text-decoration: none;
   font-size: 14px;
   letter-spacing: -0.224px;
   transition: color 0.2s;
+  cursor: pointer;
+  font-family: var(--apple-font-body, system-ui);
 }
 
 .text-link:hover {
@@ -696,14 +749,14 @@ onUnmounted(() => {
   font-weight: 400;
   letter-spacing: -0.374px;
   border-radius: 9999px !important;
-  background: transparent !important;
-  border: 1.5px solid var(--apple-hairline, #e0e0e0) !important;
-  color: var(--apple-ink, #1d1d1f) !important;
+  background: linear-gradient(135deg, var(--apple-primary, #2563eb), #0ea5e9) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: var(--apple-glow-primary, 0 20px 70px rgba(37, 99, 235, 0.22));
 }
 
 .login-btn:hover {
-  border-color: var(--apple-chip, #d2d2d7) !important;
-  background: rgba(245, 245, 247, 0.6) !important;
+  filter: brightness(1.04);
 }
 
 .login-btn:active {
@@ -717,13 +770,13 @@ onUnmounted(() => {
   font-weight: 400;
   letter-spacing: -0.374px;
   border-radius: 9999px !important;
-  background: var(--apple-ink, #1d1d1f) !important;
-  border: none !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  border: 1px solid var(--apple-hairline, #e0e0e0) !important;
+  color: var(--apple-ink, #1d1d1f) !important;
 }
 
 .goto-register-btn:hover {
-  background: #333333 !important;
+  background: var(--apple-surface-strong, #ffffff) !important;
 }
 
 .goto-register-btn:active {
@@ -744,17 +797,45 @@ onUnmounted(() => {
    响应式
    ============================================================ */
 @media (max-width: 833px) {
-  .floating-shapes { display: none; }
+  .floating-shapes,
+  .particle-canvas { display: none; }
 }
 
 @media (max-width: 480px) {
+  .login-container {
+    align-items: flex-start;
+    padding: 18px 12px;
+  }
+
   .login-card {
     max-width: 100%;
-    padding: 36px 28px;
+    padding: 28px 20px;
+    border-radius: 24px;
   }
 
   .title {
-    font-size: 28px;
+    font-size: 27px;
+  }
+
+  .logo-icon {
+    width: 68px;
+    height: 68px;
+  }
+
+  .captcha-wrapper {
+    gap: 8px;
+  }
+
+  .captcha-img {
+    width: 104px;
+    min-width: 104px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-shapes,
+  .particle-canvas {
+    display: none;
   }
 }
 </style>
